@@ -1,4 +1,5 @@
 <?php
+// $Id$
 
 /***********************************
  *
@@ -11,9 +12,11 @@ function uc_payflowpro_recurring_charge_process($order, $result) {
   // items by creating profiles for them, and linking the profile
   // ID to a table in UC so we can look up their profile information.
 
-  if($result['success'] != true) {
+  //TODO: determine if this if block from the old HEAD branch is useful and
+  //add it back in if it is.  wasn't in the version being used for D6 port.
+  /*if($result['success'] != true) {
     return false;
-  }
+  }*/
   
   $cuser = user_load(array('uid' => $order->uid));
   $payment = $order->payment_details;
@@ -305,11 +308,15 @@ function uc_payflowpro_recurring_settings() {
   $header = array(' ', ' ');
   $rows = array();
   $row = array();
-  $total_profiles = db_result(db_query('SELECT COUNT(*) FROM {uc_payflowpro_recurring_profiles}'));
-  $total_user_profiles = db_result(db_query('SELECT COUNT(DISTINCT pfp_uid) FROM {uc_payflowpro_recurring_profiles}'));
+  $total_profiles = 0;
+  //TODO: figure out what is going on with this.  
+  //current version looks much worse than pre-D6 HEAD
+  //$total_profiles = db_result(db_query('SELECT COUNT(*) FROM {uc_payflowpro_recurring_profiles}'));
+  //$total_user_profiles = db_result(db_query('SELECT COUNT(DISTINCT pfp_uid) FROM {uc_payflowpro_recurring_profiles}'));
   $total_products = db_result(db_query('SELECT COUNT(*) FROM {uc_payflowpro_recurring_products}'));
   $rows[] = array(t('Total Profiles') . ':', $total_profiles);
-  $rows[] = array(t('Total Users with Profiles') . ':', $total_user_profiles);
+  //TODO: this line also from old HEAD
+  //$rows[] = array(t('Total Users with Profiles') . ':', $total_user_profiles);
   $rows[] = array(t('Total Recurring Products') . ':', $total_products);
   $page .= theme('table', $header, $rows);
   return $page;
@@ -399,13 +406,13 @@ function uc_payflowpro_recurring_schedule_edit_form($sid = '') {
   return $form;
 }
 
-function uc_payflowpro_recurring_schedule_edit_form_submit($form_id, $form_values) {
-  if(!isset($form_values['sid'])) {
+function uc_payflowpro_recurring_schedule_edit_form_submit($form, &$form_state) {
+  if(!isset($form_state['values']['sid'])) {
     $sid = db_next_id('{uc_payflowpro_recurring_schedules}_sid');
     db_query("INSERT INTO {uc_payflowpro_recurring_schedules}(sid, title, description, terms, period)
            VALUES(%d, '%s', '%s', '%s', '%s');",
-           $sid, $form_values['title'], $form_values['description'],
-           $form_values['terms'], $form_values['period']);
+           $sid, $form_state['values']['title'], $form_state['values']['description'],
+           $form_state['values']['terms'], $form_state['values']['period']);
     drupal_set_message(t('Schedule added.'));
   }
   else {
@@ -413,9 +420,9 @@ function uc_payflowpro_recurring_schedule_edit_form_submit($form_id, $form_value
              SET title = '%s', description = '%s',
              terms = '%s', period = '%s'
              WHERE sid = %d",
-             $form_values['title'], $form_values['description'],
-             $form_values['terms'], $form_values['period'],
-             $form_values['sid']);
+             $form_state['values']['title'], $form_state['values']['description'],
+             $form_state['values']['terms'], $form_state['values']['period'],
+             $form_state['values']['sid']);
     drupal_set_message(t('Schedule updated.'));
   }
              
@@ -613,7 +620,11 @@ function uc_payflowpro_user_panel() {
     $base_url = 'admin/store/settings/uc_recurring/administer';
   }
   else {
-    if(user_access('administer store')) {
+    $query = "SELECT pfp_pid pid, pfp_profile_id as profile_id, pfp_uid as uid, pfp_origid as pn_ref 
+                         FROM {uc_payflowpro_recurring_profiles} WHERE pfp_uid = " . $user->uid;
+    $base_url = 'user/' . arg(1) . '/pfp_cpanel';
+    //TODO: investigate old HEAD version:
+    /*if(user_access('administer store')) {
       $user_id = arg(1);
     }
     else {
@@ -621,7 +632,7 @@ function uc_payflowpro_user_panel() {
     }
     $query = "SELECT pfp_pid pid, pfp_profile_id as profile_id, pfp_uid as uid, pfp_origid as pn_ref 
                          FROM {uc_payflowpro_recurring_profiles} WHERE pfp_uid = " . $user_id;
-    $base_url = 'user/' . arg(1) . '/pfp_cpanel';
+    $base_url = 'user/' . arg(1) . '/pfp_cpanel';*/
   }
   
   // Dispatcher
@@ -875,8 +886,8 @@ function payment_payflowpro_confirm_cancel($txnid = '') {
   return confirm_form($form, t('Are you sure you wish to cancel your subscription?'));
 }
 
-function uc_payflowpro_confirm_cancel_submit($form_id, $form_values) {
-  _payment_payflowpro_ec_subscription_cancel($form_values['txnid']);
+function uc_payflowpro_confirm_cancel_submit($form, &$form_state) {
+  _payment_payflowpro_ec_subscription_cancel($form_state['values']['txnid']);
   drupal_set_message(t('Your subscription has been canceled.'));
 }
 

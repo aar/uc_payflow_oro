@@ -330,7 +330,8 @@ function _payflowpro_transaction_code_to_string($result_code) {
 	}
 }
 
-function _payflowpro_recurring_payment_code_to_string($code) {
+//TODO: was in pre-D6 HEAD, determine usefulness and add in if needed
+/*function _payflowpro_recurring_payment_code_to_string($code) {
 	switch($code) {
 		case 1:
 			return t('Error');
@@ -347,6 +348,6 @@ function _payflowpro_recurring_payment_code_to_string($code) {
 		default:
 			return t('Unknown transction code');
 	}
-}
+}*/
 
 ?>

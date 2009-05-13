@@ -1,4 +1,5 @@
 <?php
+// $Id$
 
 class PayflowProRecurring {
   protected $pid = null;
@@ -116,7 +117,6 @@ class PayflowProRecurring {
       $lp_index = count($this->payment_history) - 1;
       $this->last_payment_status = isset($this->payment_history[$lp_index]['Result']) ? (int)$this->payment_history[$lp_index]['Result'] : null;
     }
-    
     return;
   }
   
@@ -240,7 +240,7 @@ class PayflowProRecurring {
     else if(module_exists('uc_payflowpro')) {
       $response = _uc_payflowpro_submit_xml($xml_request, $this->mode);
     }
-
+    
     return $response;
   }
   

@@ -1,7 +1,8 @@
 <?php
+// $Id$
 
 function uc_payflowpro_install() {
-  switch ($GLOBALS['db_type']) {
+  switch($GLOBALS['db_type']) {
     case 'mysql':
     case 'mysqli':
       db_query("CREATE TABLE {uc_payflowpro_recurring_products} (
@@ -37,34 +38,6 @@ function uc_payflowpro_install() {
           PRIMARY KEY  (`pfp_pid`)
         )
       ");
-      db_query("CREATE TABLE {uc_payflowpro_recurring_payments} (
-          pfp_pmid INT NOT NULL auto_increment,
-          order_id INT,
-          pfp_payment_id INT,
-          pnref VARCHAR(30),
-          payment_date INT,
-          payment_status INT,
-          payment_amt DOUBLE,
-          payment_data TEXT,
-          PRIMARY KEY(pfp_pmid)
-        )
-      ");
-      db_query("CREATE TABLE {uc_payflowpro_audit} (
-        audit_id INT NOT NULL auto_increment,
-        audit_date INT,
-        user_id INT,
-        order_email VARCHAR(255),
-        order_cc_num TEXT,
-        order_cc_exp_month TEXT,
-        order_cc_ext_year TEXT,
-        order_id INT,
-        order_state TEXT,
-        raw_tx TEXT,
-        result_code INT,
-        pnref VARCHAR(30),
-        auth VARCHAR(50),
-        PRIMARY KEY(audit_id)
-      )");
       break;
   }
   
@@ -81,24 +54,7 @@ function uc_payflowpro_update_1() {
     ADD COLUMN profile_status VARCHAR(45);");
   $items[] = update_sql("ALTER TABLE {uc_payflowpro_recurring_profiles}
     ADD COLUMN last_status_check INT;");
-  return $items;
-}
-
-function uc_payflowpro_update_2() {
-  // Create the new uc_payflowpro_recurring_payments table
-  $items[] = update_sql("CREATE TABLE {uc_payflowpro_recurring_payments} (
-          pfp_pmid INT NOT NULL auto_increment,
-          pfp_payment_id INT,
-          order_id INT,
-          pnref VARCHAR(30),
-          payment_date INT,
-          payment_status INT,
-          payment_data TEXT,
-          payment_amt DOUBLE,
-          PRIMARY KEY(pfp_pmid)
-        )");  
-  // Return status
-  return $items;
+  break;
 }
 
 ?>

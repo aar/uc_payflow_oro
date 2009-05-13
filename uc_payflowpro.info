@@ -1,6 +1,8 @@
 ; $Id$
 name = PayFlow Pro
 description = A gateway used to process payments using PayPal PayFlow Pro.  This module conflicts with the PayPal module.
-dependencies = uc_payment uc_credit
+dependencies[] = uc_payment
+dependencies[] = uc_credit
 package = Ubercart - payment
-
+core = 6.x
+php = 5.0
