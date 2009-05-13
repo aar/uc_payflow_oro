@@ -928,8 +928,8 @@ function _uc_payflowpro_wrap_xml($transaction) {
   $xml = '<?xml version="1.0" encoding="UTF-8"?>
 <XMLPayRequest Timeout="30" version = "2.0" xmlns="http://www.paypal.com/XMLPay">
   <RequestData>
-    <Vendor>' . variable_get('uc_payflowpro_vendor', '') . '</Vendor>
-    <Partner>' . variable_get('uc_payflowpro_partner', '') . '</Partner>
+    <Vendor>' . check_plain(variable_get('uc_payflowpro_vendor', '')) . '</Vendor>
+    <Partner>' . check_plain(variable_get('uc_payflowpro_partner', '')) . '</Partner>
     <Transactions>
       <Transaction>
 ' . $transaction . '
@@ -938,8 +938,8 @@ function _uc_payflowpro_wrap_xml($transaction) {
   </RequestData>
   <RequestAuth>
     <UserPass>
-      <User>' . variable_get('uc_payflowpro_user', '') . '</User>
-      <Password>' . variable_get('uc_payflowpro_password', '') . '</Password>
+      <User>' . check_plain(variable_get('uc_payflowpro_user', '')) . '</User>
+      <Password>' . check_plain(variable_get('uc_payflowpro_password', '')) . '</Password>
     </UserPass>
   </RequestAuth>
 </XMLPayRequest>';
@@ -956,11 +956,11 @@ function _uc_payflowpro_items_xml($order) {
   foreach ($order->products as $product) {
     $subtotal += $product->qty * $product->price;
     $xml .= '                <Item Number="' . ++$item_number . '">
-                  <SKU>' . $product->model . '</SKU>
-                  <UPC>' . $product->model . '</UPC>
-                  <Description>' . $product->title . '</Description>
-                  <Quantity>' . $product->qty . '</Quantity>
-                  <UnitPrice>' . $product->price . '</UnitPrice>
+                  <SKU>' . check_plain($product->model) . '</SKU>
+                  <UPC>' . check_plain($product->model) . '</UPC>
+                  <Description>' . check_plain($product->title) . '</Description>
+                  <Quantity>' . intval($product->qty) . '</Quantity>
+                  <UnitPrice>' . floatval($product->price) . '</UnitPrice>
                 </Item>
 ';
   }
@@ -1000,31 +1000,31 @@ function _uc_payflowpro_invoice_xml($order) {
   }
 
   $xml = '            <Invoice> 
-              <InvNum>' . $order->order_id . '</InvNum>
-              <Comment>' . _uc_get_skus($order) . '</Comment>
+              <InvNum>' . intval($order->order_id) . '</InvNum>
+              <Comment>' . check_plain(_uc_get_skus($order)) . '</Comment>
               <BillTo>
-                <Name>' . $order->billing_first_name . ' ' . $order->billing_last_name . '</Name>
-                <Phone>' . $order->billing_phone . '</Phone>
-                <EMail>' . $order->primary_email . '</EMail>
+                <Name>' . check_plain($order->billing_first_name . ' ' . $order->billing_last_name) . '</Name>
+                <Phone>' . check_plain($order->billing_phone) . '</Phone>
+                <EMail>' . check_plain($order->primary_email) . '</EMail>
                 <CustCode>' . $order->uid . '</CustCode>
                 <Address>
-                  <Street>' . $order->billing_street1 . '</Street>
-                  <City>' . $order->billing_city . '</City>
-                  <State>' . uc_get_zone_code($order->billing_zone) . '</State>
-                  <Zip>' . $order->billing_postal_code . '</Zip>
-                  <Country>' . $billing_country[0]['country_iso_code_2'] . '</Country>
+                  <Street>' . check_plain($order->billing_street1) . '</Street>
+                  <City>' . check_plain($order->billing_city) . '</City>
+                  <State>' . check_plain(uc_get_zone_code($order->billing_zone)) . '</State>
+                  <Zip>' . check_plain($order->billing_postal_code) . '</Zip>
+                  <Country>' . check_plain($billing_country[0]['country_iso_code_2']) . '</Country>
                 </Address>
               </BillTo>
               <ShipTo>
-                <Name>' . $order->delivery_first_name . ' ' . $order->delivery_last_name . '</Name>
-                <Phone>' . $order->delivery_phone . '</Phone>
-                <EMail>' . $order->primary_email . '</EMail>
+                <Name>' . check_plain($order->delivery_first_name . ' ' . $order->delivery_last_name) . '</Name>
+                <Phone>' . check_plain($order->delivery_phone) . '</Phone>
+                <EMail>' . check_plain($order->primary_email) . '</EMail>
                 <Address>
-                  <Street>' . $order->delivery_street1 . '</Street>
-                  <City>' . $order->delivery_city . '</City>
-                  <State>' . uc_get_zone_code($order->delivery_zone) . '</State>
-                  <Zip>' . $order->delivery_postal_code . '</Zip>
-                  <Country>' . $delivery_country[0]['country_iso_code_2'] . '</Country>
+                  <Street>' . check_plain($order->delivery_street1) . '</Street>
+                  <City>' . check_plain($order->delivery_city) . '</City>
+                  <State>' . check_plain(uc_get_zone_code($order->delivery_zone)) . '</State>
+                  <Zip>' . check_plain($order->delivery_postal_code) . '</Zip>
+                  <Country>' . check_plain($delivery_country[0]['country_iso_code_2']) . '</Country>
                 </Address>
               </ShipTo>
 ' . _uc_payflowpro_items_xml($order) . '
@@ -1081,10 +1081,10 @@ function _uc_payflowpro_cc_info_xml($order_id) {
   
   $xml = '
               <Card> 
-                <CardNum>' . $order->payment_details['cc_number'] . '</CardNum> 
-                <ExpDate>' . $cc_exp . '</ExpDate> 
-                <NameOnCard>' . $order->payment_details['cc_owner'] . '</NameOnCard>
-                <CVNum>' . $order->payment_details['cc_cvv'] . '</CVNum>
+                <CardNum>' . check_plain($order->payment_details['cc_number']) . '</CardNum> 
+                <ExpDate>' . check_plain($cc_exp) . '</ExpDate> 
+                <NameOnCard>' . check_plain($order->payment_details['cc_owner']) . '</NameOnCard>
+                <CVNum>' . check_plain($order->payment_details['cc_cvv']) . '</CVNum>
               </Card>
         ';
   return $xml;
@@ -1100,10 +1100,10 @@ function _uc_payflowpro_set_ec_xml($order) {
 ' . _uc_payflowpro_invoice_xml($order) . '
               <Tender>
                 <PayPal>
-                  <EMail>' . $order->primary_email . '</EMail>
+                  <EMail>' . check_plain($order->primary_email) . '</EMail>
                   <ReturnURL>' . url('cart/echeckout/selected', array('absolute' => TRUE)) . '</ReturnURL>
                   <CancelURL>' . url('uc_payflowpro/ec/cancel', array('absolute' => TRUE)) . '</CancelURL>
-                  <ReqConfirmShipping>' . variable_get('uc_payflowpro_ec_reqconfirmed_addr') . '</ReqConfirmShipping>
+                  <ReqConfirmShipping>' . check_plain(variable_get('uc_payflowpro_ec_reqconfirmed_addr')) . '</ReqConfirmShipping>
                 </PayPal>
               </Tender>
             </PayData>
@@ -1122,7 +1122,7 @@ function _uc_payflowpro_get_ec_xml($token) {
             <PayData>
               <Tender>
                 <PayPal>
-                  <Token>' . $token . '</Token>
+                  <Token>' . check_plain($token) . '</Token>
                 </PayPal>
               </Tender>
             </PayData>
@@ -1142,8 +1142,8 @@ function _uc_payflowpro_do_ec_xml($order) {
 ' . _uc_payflowpro_invoice_xml($order) . '
               <Tender>
                 <PayPal>
-                  <Token>' . $_SESSION['TOKEN'] . ' </Token>
-                  <PayerID>' . $_SESSION['PAYERID'] . '</PayerID>
+                  <Token>' . check_plain($_SESSION['TOKEN']) . ' </Token>
+                  <PayerID>' . check_plain($_SESSION['PAYERID']) . '</PayerID>
                   <ButtonSource>Ubercart_ShoppingCart_EC_US</ButtonSource>
                 </PayPal>
               </Tender>
@@ -1184,30 +1184,30 @@ function _uc_payflowpro_recurring_profile($order, $opt = array()) {
   }
 
   $xml = '            <Invoice> 
-              <InvNum>' . $order->order_id . '</InvNum>
+              <InvNum>' . intval($order->order_id) . '</InvNum>
               <BillTo>
-                <Name>' . $order->billing_first_name . ' ' . $order->billing_last_name . '</Name>
-                <Phone>' . $order->billing_phone . '</Phone>
-                <EMail>' . $order->primary_email . '</EMail>
-                <CustCode>' . $order->uid . '</CustCode>
+                <Name>' . check_plain($order->billing_first_name . ' ' . $order->billing_last_name) . '</Name>
+                <Phone>' . check_plain($order->billing_phone) . '</Phone>
+                <EMail>' . check_plain($order->primary_email) . '</EMail>
+                <CustCode>' . check_plain($order->uid) . '</CustCode>
                 <Address>
-                  <Street>' . $order->billing_street1 . '</Street>
-                  <City>' . $order->billing_city . '</City>
-                  <State>' . uc_get_zone_code($order->billing_zone) . '</State>
-                  <Zip>' . $order->billing_postal_code . '</Zip>
-                  <Country>' . $billing_country[0]['country_iso_code_2'] . '</Country>
+                  <Street>' . check_plain($order->billing_street1) . '</Street>
+                  <City>' . check_plain($order->billing_city) . '</City>
+                  <State>' . check_plain(uc_get_zone_code($order->billing_zone)) . '</State>
+                  <Zip>' . check_plain($order->billing_postal_code) . '</Zip>
+                  <Country>' . check_plain($billing_country[0]['country_iso_code_2']) . '</Country>
                 </Address>
               </BillTo>
               <ShipTo>
-                <Name>' . $order->delivery_first_name . ' ' . $order->delivery_last_name . '</Name>
-                <Phone>' . $order->delivery_phone . '</Phone>
-                <EMail>' . $order->primary_email . '</EMail>
+                <Name>' . check_plain($order->delivery_first_name . ' ' . $order->delivery_last_name) . '</Name>
+                <Phone>' . check_plain($order->delivery_phone) . '</Phone>
+                <EMail>' . check_plain($order->primary_email) . '</EMail>
                 <Address>
-                  <Street>' . $order->delivery_street1 . '</Street>
-                  <City>' . $order->delivery_city . '</City>
-                  <State>' . uc_get_zone_code($order->delivery_zone) . '</State>
-                  <Zip>' . $order->delivery_postal_code . '</Zip>
-                  <Country>' . $delivery_country[0]['country_iso_code_2'] . '</Country>
+                  <Street>' . check_plain($order->delivery_street1) . '</Street>
+                  <City>' . check_plain($order->delivery_city) . '</City>
+                  <State>' . check_plain(uc_get_zone_code($order->delivery_zone)) . '</State>
+                  <Zip>' . check_plain($order->delivery_postal_code) . '</Zip>
+                  <Country>' . check_plain($delivery_country[0]['country_iso_code_2']) . '</Country>
                 </Address>
               </ShipTo>
 ' . _uc_payflowpro_items_xml($order) . '
@@ -1216,6 +1216,7 @@ function _uc_payflowpro_recurring_profile($order, $opt = array()) {
               <TotalAmt>' . uc_currency_format($order->order_total, FALSE, FALSE, '.') . '</TotalAmt> 
             </Invoice>';
             
+  //TODO: un-hard-code the address and such
   $smlq = '
           <RequestData>
             <Vendor>vendor</Vendor>
@@ -1227,12 +1228,12 @@ function _uc_payflowpro_recurring_profile($order, $opt = array()) {
                     _uc_payflowpro_cc_info_xml($oder->order_id) . '
                   </Tender>
                   <RPData>
-                    <Name>' . $profile_name . '</Name>
+                    <Name>' . check_plain($profile_name) . '</Name>
                     <TotalAmt>' . $recurring_amt . '</TotalAmt>
                     <Start>' . $profile_start_date . '</Start>
                     <Term>' . $profile_term . '</Term>
                     <PayPeriod>' . $profile_period . '</PayPeriod>
-                    <EMail>' . $order->primary_email . '</EMail>
+                    <EMail>' . check_plain($order->primary_email) . '</EMail>
                     <OptionalTrans>Sale</OptionalTrans>
                     <OptionalTransAmt>12</OptionalTransAmt>
                     <BillTo>

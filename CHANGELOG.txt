@@ -1,0 +1,10 @@
+// $Id$
+
+UC Payflow Pro 6.x-1.1, xxxx-xx-xx
+------------------------------
+#318351 by neilnz, kwinters: Fixed XML encoding for html entities
+
+
+UC Payflow Pro 6.x-1.0-beta1, 2009-5-13
+------------------------------
+Initial release of uc_payflowpro module for D6
