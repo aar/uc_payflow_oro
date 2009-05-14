@@ -57,4 +57,39 @@ function uc_payflowpro_update_1() {
   break;
 }
 
+/**
+ * Implementation of hook_uninstall().
+ */
+function uc_payflowpro_uninstall() {
+  db_query('DROP TABLE {uc_payflowpro_recurring_products}');
+  db_query('DROP TABLE {uc_payflowpro_recurring_schedules}');
+  db_query('DROP TABLE {uc_payflowpro_recurring_profiles}');
+  //TODO: once recurring payments are fixed in D6, make sure tables get dropped
+  //db_query('DROP TABLE {uc_payflowpro_recurring_payments}');
+  //db_query('DROP TABLE {uc_payflowpro_audit}');
+  //this block is referenced but never set
+  /*variable_del('ec_payflowpro_partner');
+  variable_del('ec_payflowpro_password');
+  variable_del('ec_payflowpro_sdk_cert_path');
+  variable_del('ec_payflowpro_tx_mode');
+  variable_del('ec_payflowpro_user');
+  variable_del('ec_payflowpro_vendor');*/
+  variable_del('uc_payflowpro_cert_path');
+  variable_del('uc_payflowpro_ec_reqconfirmed_addr');
+  variable_del('uc_payflowpro_ec_review_comment');
+  variable_del('uc_payflowpro_ec_review_company');
+  variable_del('uc_payflowpro_ec_review_phone');
+  variable_del('uc_payflowpro_ec_review_shipping');
+  variable_del('uc_payflowpro_enable_recurring');
+  variable_del('uc_payflowpro_error_codes_accept');
+  variable_del('uc_payflowpro_mode');
+  variable_del('uc_payflowpro_partner');
+  variable_del('uc_payflowpro_password');
+  variable_del('uc_payflowpro_payment_action');
+  variable_del('uc_payflowpro_recurring_site_key');
+  variable_del('uc_payflowpro_user');
+  variable_del('uc_payflowpro_vendor');
+  variable_del('uc_payment_method_payflowpro_ec_checkout');
+}
+
 ?>
