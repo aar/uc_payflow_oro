@@ -807,5 +807,3 @@ function _my_submit($xml_request, $mode = 'test') {
     }
     return $response;
   }
-
-?>

@@ -160,7 +160,7 @@ function _payflowpro_transaction_code_to_string($result_code) {
 		case 3:
 			return t('Invalid transaction type. Transaction type is not appropriate for this transaction. For example, you cannot credit an authorization-only transaction.');
 		case 4:
-			return t('Invalid amount format. Use the format: “#####.##�? Do not include currency symbols or commas.');
+			return t('Invalid amount format. Use the format: “#####.##�? Do not include currency symbols or commas.');
 		case 5:
 			return t('Invalid merchant information. Processor does not recognize your merchant account information. Contact your bank account acquirer to resolve this problem.');
 		case 6:
@@ -349,5 +349,3 @@ function _payflowpro_transaction_code_to_string($result_code) {
 			return t('Unknown transction code');
 	}
 }*/
-
-?>

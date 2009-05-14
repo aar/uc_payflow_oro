@@ -902,5 +902,3 @@ function _uc_payflowpro_ec_subscription_cancel($txnid) {
   
   return;
 }
-
-?>
