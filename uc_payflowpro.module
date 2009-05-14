@@ -185,27 +185,17 @@ function uc_payflowpro_payment_gateway() {
   return $gateways;
 }
 
-/********************
- * 
- */
-
 function uc_payflowpro_charge($order_id, $amount, $data) {
-  
-  // DEBUG
-  $order = uc_order_load($order_id);
-
+  // Check that all required functions exist
   if (!_uc_payflowpro_check_requirements()) {
     return array('success' => FALSE);
   }
 
-  global $user;
+  global $user, $response;
+  $order = uc_order_load($order_id);
 
   $request = _uc_payflowpro_cc_sale_xml($order_id, $amount, $data);
   $response = _uc_payflowpro_submit_xml($request);
-  // drupal_set_message('TEST0 ' . print_r($request, 1));
-  // drupal_set_message('TEST2 ' . print_r($response, 1));
-  
-  // TODO: Data goes here
   
   if (!$response) {
     $message = t('Received blank response from the PayFlow Pro gateway.');
@@ -219,9 +209,7 @@ function uc_payflowpro_charge($order_id, $amount, $data) {
   }
   
   $txn_result_code = $response->Result;
-  //drupal_set_message('TEST3 ' . print_r($txn_result_code,  1));
   $txn_message = $response->Message;
-  //drupal_set_message('TEST4 ' . print_r($txn_message,  1));
 
   if ((int)$txn_result_code != 0) {
     $message = t('Credit card declined for !amount with error code !return_code.', array('!amount' => uc_currency_format($amount), '!return_code' => $txn_result_code));
@@ -1049,22 +1037,21 @@ function _uc_get_skus($order) {
 function _uc_payflowpro_cc_sale_xml($order_id, $amount, $data) {
   $order = uc_order_load($order_id);
 
-  //$payment_method = variable_get('uc_payflowpro_payment_method', '');
-  $payment_method = variable_get('uc_payflowpro_payment_action', '');
+   // Get payment action (Sale or Authorization)
+  $payment_action = variable_get('uc_payflowpro_payment_action', '');
 
   if (strlen($cc_exp_month) == 2) {
     $cc_exp = $cc_exp_year .  $cc_exp_month;
   }
 
-  $xml = '         <' . $payment_method . '>
+  $xml = '         <' . $payment_action . '>
           <PayData>
 ' . _uc_payflowpro_invoice_xml($order) . '
             <Tender> 
-' . _uc_payflowpro_cc_info_xml($order_id) . 
-'
+' . _uc_payflowpro_cc_info_xml($order_id) . '
             </Tender>
           </PayData>
-        </' . $payment_method . '>';
+        </' . $payment_action . '>';
 
   return _uc_payflowpro_wrap_xml($xml);
 }
@@ -1092,10 +1079,11 @@ function _uc_payflowpro_cc_info_xml($order_id) {
 
 // Generate XML for SetExpressCheckout
 function _uc_payflowpro_set_ec_xml($order) {
-  $payment_method = variable_get('uc_payflowpro_payment_method', '');
+  // Get payment action (Sale or Authorization)
+  $payment_action = variable_get('uc_payflowpro_payment_action', '');
 
   $xml = '         <SetExpressCheckout>
-          <' . $payment_method . '>
+          <' . $payment_action . '>
             <PayData>
 ' . _uc_payflowpro_invoice_xml($order) . '
               <Tender>
@@ -1107,7 +1095,7 @@ function _uc_payflowpro_set_ec_xml($order) {
                 </PayPal>
               </Tender>
             </PayData>
-          </' . $payment_method . '>
+          </' . $payment_action . '>
         </SetExpressCheckout>';
 
   return _uc_payflowpro_wrap_xml($xml);
@@ -1115,10 +1103,11 @@ function _uc_payflowpro_set_ec_xml($order) {
 
 // Generate XML for GetExpressCheckout
 function _uc_payflowpro_get_ec_xml($token) {
-  $payment_method = variable_get('uc_payflowpro_payment_method', '');
+  // Get payment action (Sale or Authorization)
+  $payment_action = variable_get('uc_payflowpro_payment_action', '');
 
   $xml = '         <GetExpressCheckout>
-          <' . $payment_method . '>
+          <' . $payment_action . '>
             <PayData>
               <Tender>
                 <PayPal>
@@ -1126,7 +1115,7 @@ function _uc_payflowpro_get_ec_xml($token) {
                 </PayPal>
               </Tender>
             </PayData>
-          </' . $payment_method . '>
+          </' . $payment_action . '>
         </GetExpressCheckout>';
 
   return _uc_payflowpro_wrap_xml($xml);
@@ -1134,10 +1123,11 @@ function _uc_payflowpro_get_ec_xml($token) {
 
 // Generate XML for DoExpressCheckout
 function _uc_payflowpro_do_ec_xml($order) {
-  $payment_method = variable_get('uc_payflowpro_payment_method', '');
+  // Get payment action (Sale or Authorization)
+  $payment_action = variable_get('uc_payflowpro_payment_action', '');
 
   $xml = '         <DoExpressCheckout>
-          <' . $payment_method . '>
+          <' . $payment_action . '>
             <PayData>
 ' . _uc_payflowpro_invoice_xml($order) . '
               <Tender>
@@ -1148,7 +1138,7 @@ function _uc_payflowpro_do_ec_xml($order) {
                 </PayPal>
               </Tender>
             </PayData>
-          </' . $payment_method . '>
+          </' . $payment_action . '>
           </DoExpressCheckout>';
 
   return uc_payflowpro_wrap_xml($xml);
@@ -1371,7 +1361,7 @@ function _uc_payflowpro_recurring_periods($lu = '') {
 
 // check for required modules
 function _uc_payflowpro_check_requirements() {
-  $success = true;
+  $success = TRUE;
 
   if (!function_exists('curl_init')) {
     drupal_set_message(t('The PayFlow Pro service requires cURL. Please talk to your system administrator to get this configured.'));
