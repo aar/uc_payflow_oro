@@ -2,6 +2,10 @@
 
 UC Payflow Pro 6.x-1.1, xxxx-xx-xx
 ------------------------------
+
+
+UC Payflow Pro 6.x-1.0-beta2, 2009-5-26
+------------------------------
 #318351 by neilnz, kwinters: Fixed XML encoding for html entities
 #292063 by AntoineSolutions, kwinters: Added uninstall hook
 #291538 by AntoineSolutions, kwinters: Code style changes from a D5 bugfix 
