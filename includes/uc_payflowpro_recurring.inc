@@ -17,14 +17,14 @@ function uc_payflowpro_recurring_charge_process($order, $result) {
   /*if($result['success'] != true) {
     return false;
   }*/
-  
+
   $cuser = user_load(array('uid' => $order->uid));
   $payment = $order->payment_details;
   $site_key = variable_get('uc_payflowpro_recurring_site_key', 'drupal_uc');
   foreach($order->products as $k => $item) {
-    
+
     if(isset($item->data['pfp_renew']) && $item->data['pfp_renew']['renew']) {
-      
+
       $info = $item->data['pfp_renew'];
       // Get the current schedule for this product
       $schedule = _uc_payflowpro_recurring_get_schedule(array('nid' => $item->nid));
@@ -32,7 +32,7 @@ function uc_payflowpro_recurring_charge_process($order, $result) {
       $profile = null;
       $profile = new PayflowProRecurring();
       $profile->setAuth(_uc_payflowpro_get_auth());
-      
+
       // Call the create new function to set the
       // object up to create a new profile.
       $profile->createNew();
@@ -42,7 +42,7 @@ function uc_payflowpro_recurring_charge_process($order, $result) {
         $profile->setShipTo(_uc_payflowpro_format_address($order, 'shipto'));
       }
       $profile->setEmail($cuser->mail);
-      
+
       // Tedner
       $tender['Type'] = 'C';
       $tender['CardNum'] = $payment['cc_number'];
@@ -50,7 +50,7 @@ function uc_payflowpro_recurring_charge_process($order, $result) {
       $tender['ExpDate'] = $payment['cc_exp_year'] . sprintf('%02d', $payment['cc_exp_month']);
       $tender['CVNum'] = $payment['cc_cvv'];
       $profile->setTender($tender);
-      
+
       // Terms
       $profile->setAmt($item->price);
       # Start date is calcuated as term + 1, meaning if weekly, start next week; monthly start next month
@@ -58,7 +58,7 @@ function uc_payflowpro_recurring_charge_process($order, $result) {
       $profile->setStartDate(format_date($start_date, 'custom', 'mdY'));
       $profile->setTerm($info['terms']); // Terms come from the user, not the schedule
       $profile->setPayPeriod(_uc_to_pfp_format_period($schedule->period)); // Period can NOT come from the user
-      
+
       $result = $profile->save();
       $result = $result->RecurringProfileResult;
       // Place the profile result into our database
@@ -75,10 +75,10 @@ function uc_payflowpro_recurring_charge_process($order, $result) {
                  $result->RPRef,
                  $result->Result, $item->model);
       }
-      
+
     }
   }
-  
+
 }
 
 // Helpers to be moved
@@ -116,7 +116,7 @@ function _uc_pfp_period_map() {
     'SA' => 'Semi-yearly',
     'Y' => 'Yearly',
   );
-  
+
   return $map;
 }
 
@@ -124,7 +124,7 @@ function _uc_pfp_period_map() {
 /**
  *
  * Reference this information about payment dates:
- * 
+ *
  * -- WEEK: Weekly - Every week on the same day of the week as the first payment.
  * -- BIWK: Every Two Weeks - Every other week on the same day of the week as the first payment.
  * -- SMMO: Twice Every Month - The 1st and 15th of the month. Results in 24 payments per year. SMMO can start on 1st to 15th of the month, second payment 15 days later or on the last day of the month.
@@ -135,7 +135,7 @@ function _uc_pfp_period_map() {
  * -- YEAR: Yearly - Every 12 months on the same date as the first payment.
  *
  * //TODO Correct the start dates for the other types
- * 
+ *
  */
 function _uc_pfp_calc_start_date($period) {
   $today = time();
@@ -188,9 +188,9 @@ function _uc_pfp_calc_start_date($period) {
   return $start_date;
 }
 /*******************************************************************************
- * 
+ *
  * Recurring Billing Uberbart hooks
- *  
+ *
  ******************************************************************************/
 function uc_payflowpro_checkout_pane() {
   if(variable_get('uc_payflowpro_enable_recurring', false) == false) {
@@ -209,7 +209,7 @@ function uc_payflowpro_checkout_pane() {
 }
 
 function uc_payflowpro_recurring_checkout_pane_cart($op, &$arg1, $arg2) {
-  
+
   switch($op) {
     case 'view':
       $description = t('You may select which products would like to auto
@@ -237,7 +237,7 @@ function uc_payflowpro_recurring_co_pane_contents($order = '') {
   foreach($items as $k => $item) {
     $vids[] =  $item->vid;
   }
-  
+
   $rs = db_query("SELECT model, terms, period, urp.vid FROM {uc_payflowpro_recurring_products} urp INNER JOIN {uc_products} p ON urp.vid = p.vid
                  INNER JOIN {uc_payflowpro_recurring_schedules} urs ON urp.sid = urp.sid
                  WHERE urp.vid IN('%s')", implode(',', $vids));
@@ -264,7 +264,7 @@ function uc_payflowpro_recurring_co_pane_contents($order = '') {
       '#options' => drupal_map_assoc(range(0,12)),
     );
   }
-  
+
   return $form;
 }
 
@@ -289,27 +289,27 @@ function theme_uc_pfp_recurring_co_pane_table($form_values) {
     return '<div><em>' . t('You have no renewable items in your cart.') . '</em></div>';;
   }
   $output .= theme('table', $header, $rows);
-  
+
   return $output;
 }
 
 
 
 /*******************************************************************************
- * 
+ *
  * Recurring Billing settings/forms/functions
- *  
+ *
  ******************************************************************************/
 function uc_payflowpro_recurring_settings() {
   $page = '';
-  
-  
+
+
   $page .= '<h2>' . t('Recurring Stats') . '</h2>';
   $header = array(' ', ' ');
   $rows = array();
   $row = array();
   $total_profiles = 0;
-  //TODO: figure out what is going on with this.  
+  //TODO: figure out what is going on with this.
   //current version looks much worse than pre-D6 HEAD
   //$total_profiles = db_result(db_query('SELECT COUNT(*) FROM {uc_payflowpro_recurring_profiles}'));
   //$total_user_profiles = db_result(db_query('SELECT COUNT(DISTINCT pfp_uid) FROM {uc_payflowpro_recurring_profiles}'));
@@ -324,7 +324,7 @@ function uc_payflowpro_recurring_settings() {
 
 function uc_payflowpro_recurring_schedules() {
   $page = '';
-  
+
   if(arg(6) == 'edit') {
     $page = drupal_get_form('uc_payflowpro_recurring_schedule_edit_form', arg(5));
     return $page;
@@ -343,7 +343,7 @@ function uc_payflowpro_recurring_schedules() {
     '#value' => drupal_get_form('uc_payflowpro_recurring_schedule_edit_form'),
   );
   $page .= drupal_render($block);
-  
+
   // Current Schedules
   $header = array(t('Name'), t('Terms'), '');
   $rows = array();
@@ -367,7 +367,7 @@ function uc_payflowpro_recurring_schedules() {
   return $page;
 }
 
-function uc_payflowpro_recurring_schedule_edit_form($sid = '') {
+function uc_payflowpro_recurring_schedule_edit_form($form_state, $sid = '') {
   $form = array();
   $s = db_fetch_object(db_query("SELECT * FROM {uc_payflowpro_recurring_schedules} WHERE sid = %d", $sid));
   $form['title'] = array(
@@ -401,17 +401,16 @@ function uc_payflowpro_recurring_schedule_edit_form($sid = '') {
   else {
     $form['add'] = array('#type' => 'submit', '#value' => t('Add Schedule'));
   }
-  
-  
+
+
   return $form;
 }
 
 function uc_payflowpro_recurring_schedule_edit_form_submit($form, &$form_state) {
   if(!isset($form_state['values']['sid'])) {
-    $sid = db_next_id('{uc_payflowpro_recurring_schedules}_sid');
-    db_query("INSERT INTO {uc_payflowpro_recurring_schedules}(sid, title, description, terms, period)
-           VALUES(%d, '%s', '%s', '%s', '%s');",
-           $sid, $form_state['values']['title'], $form_state['values']['description'],
+    db_query("INSERT INTO {uc_payflowpro_recurring_schedules} (title, description, terms, period)
+           VALUES('%s', '%s', '%s', '%s');",
+           $form_state['values']['title'], $form_state['values']['description'],
            $form_state['values']['terms'], $form_state['values']['period']);
     drupal_set_message(t('Schedule added.'));
   }
@@ -425,19 +424,20 @@ function uc_payflowpro_recurring_schedule_edit_form_submit($form, &$form_state) 
              $form_state['values']['sid']);
     drupal_set_message(t('Schedule updated.'));
   }
-             
+
   return;
 }
 
-function uc_payflowpro_recurring_schedule_delete_form($sid) {
+function uc_payflowpro_recurring_schedule_delete_form($form_state, $sid) {
   $form = array();
   $form['sid'] = array('#type' => 'hidden', '#value' => $sid);
   return confirm_form($form, t('Are you sure you wish to remove this schedule?'), 'admin/store/settings/uc_recurring/schedules');
 }
-function uc_payflowpro_recurring_schedule_delete_form_submit($form_id, $form_values) {
-  db_query("DELETE FROM {uc_payflowpro_recurring_schedules} WHERE sid = %d", $form_values['sid']);
+
+function uc_payflowpro_recurring_schedule_delete_form_submit($form, &$form_state) {
+  db_query("DELETE FROM {uc_payflowpro_recurring_schedules} WHERE sid = %d", $form_state['values']['sid']);
   drupal_set_message(t('The schedule has been removed from the system.'));
-  return 'admin/store/settings/uc_recurring/schedules';
+  $form_state['redirect'] = 'admin/store/settings/uc_recurring/schedules';
 }
 
 /**
@@ -445,7 +445,7 @@ function uc_payflowpro_recurring_schedule_delete_form_submit($form_id, $form_val
  */
 function uc_payflowpro_recurring_products() {
   $page = '';
-  
+
   if(arg(6) == 'edit') {
     $page = drupal_get_form('uc_payflowpro_recurring_products_edit_form', arg(5));
     return $page;
@@ -464,7 +464,7 @@ function uc_payflowpro_recurring_products() {
     '#value' => drupal_get_form('uc_payflowpro_recurring_products_edit_form'),
   );
   $page .= drupal_render($block);
-  
+
   // Current Products
   $header = array(t('Name/Model'), t('Terms'), '');
   $rows = array();
@@ -487,14 +487,14 @@ function uc_payflowpro_recurring_products() {
     $rows[] = $tr;
   }
   $page .= theme('table', $header, $rows);
-  
+
   return $page;
 }
 
 // Recurring products edit form
-function uc_payflowpro_recurring_products_edit_form($uc_pfp_rpid = '') {
+function uc_payflowpro_recurring_products_edit_form($form_state, $uc_pfp_rpid = '') {
   $form = array();
-  
+
   $products = array();
   if(!is_numeric($uc_pfp_rpid)) {
     $rs = db_query('SELECT nid, vid, model FROM {uc_products}
@@ -503,6 +503,7 @@ function uc_payflowpro_recurring_products_edit_form($uc_pfp_rpid = '') {
                     )');
   }
   else {
+    //TODO: this block is a hacky way to prevent you from changing the product ID, either make it no longer needed or make the field type='value' on edit instead.
     $rs = db_query('SELECT nid, up.vid, model FROM {uc_products} up INNER JOIN {uc_payflowpro_recurring_products} urp ON up.vid = urp.vid WHERE urp.uc_pfp_rpid = %d', $uc_pfp_rpid);
   }
   while($row = db_fetch_object($rs)) {
@@ -518,13 +519,18 @@ function uc_payflowpro_recurring_products_edit_form($uc_pfp_rpid = '') {
   while($row = db_fetch_object($rs)) {
     $schedules[$row->sid] = $row->title;
   }
+  if (empty($schedules))
+  {
+    drupal_set_message(t('You must create a schedule first'), 'error');
+    $schedules = array(-1 => t('You must create a schedule first'));
+  }
   $form['sid'] = array(
     '#type' => 'select',
     '#title' => t('Schedule'),
     '#default_value' => $p->sid,
     '#options' => $schedules,
   );
-  
+
   if(is_numeric($uc_pfp_rpid)) {
     $form['uc_pfp_rpid'] = array('#type' => 'hidden', '#value' => $uc_pfp_rpid);
     $form['update'] = array('#type' => 'submit',
@@ -537,12 +543,12 @@ function uc_payflowpro_recurring_products_edit_form($uc_pfp_rpid = '') {
   }
   return $form;
 }
-// Submit a Recurring PRoducts
-function uc_payflowpro_recurring_products_edit_form_submit($form_id, $form_values) {
-  if(!isset($form_values['uc_pfp_rpid'])) {
+// Submit Recurring Products
+function uc_payflowpro_recurring_products_edit_form_submit($form, &$form_state) {
+  if(!isset($form_state['values']['uc_pfp_rpid'])) {
     $try = db_query("INSERT INTO {uc_payflowpro_recurring_products}(vid, sid)
                     VALUES(%d, %d)",
-                    $form_values['vid'], $form_values['sid']);
+                    $form_state['values']['vid'], $form_state['values']['sid']);
     if(!$try) {
       drupal_set_message(t('There was an error adding your products.'), 'error');
     }
@@ -554,28 +560,28 @@ function uc_payflowpro_recurring_products_edit_form_submit($form_id, $form_value
     $try = db_query("UPDATE {uc_payflowpro_recurring_products}
                     SET sid = %d
                     WHERE uc_pfp_id = %d",
-                    $form_values['sid'], $form_values['uc_pfp_id']);
+                    $form_state['values']['sid'], $form_state['values']['uc_pfp_id']);
     if(!$try) {
       drupal_set_message(t('There was an error adding your products.'), 'error');
     }
     else {
       drupal_set_message(t('Your recurring product option has been updaed.'));
-      return 'admin/store/settings/uc_recurring/products';
+      $form_state['redirect'] = 'admin/store/settings/uc_recurring/products';
     }
   }
   return;
 }
 
 // Delete
-function uc_payflowpro_recurring_products_delete_form($uc_pfp_rpid) {
+function uc_payflowpro_recurring_products_delete_form($form_state, $uc_pfp_rpid) {
   $form = array();
   $form['uc_pfp_rpid'] = array('#type' => 'hidden', '#value' => $uc_pfp_rpid);
   return confirm_form($form, t('Are you sure you wish to remove this schedule from this product?'), 'admin/store/settings/uc_recurring/products');
 }
-function uc_payflowpro_recurring_products_delete_form_submit($form_id, $form_values) {
-  db_query("DELETE FROM {uc_payflowpro_recurring_products} WHERE uc_pfp_rpid = %d", $form_values['uc_pfp_rpid']);
+function uc_payflowpro_recurring_products_delete_form_submit($form, &$form_state) {
+  db_query("DELETE FROM {uc_payflowpro_recurring_products} WHERE uc_pfp_rpid = %d", $form_state['values']['uc_pfp_rpid']);
   drupal_set_message(t('The product has had the selected schedule removed.'));
-  return 'admin/store/settings/uc_recurring/products';
+  $form_state['redirect'] = 'admin/store/settings/uc_recurring/products';
 }
 
 /*************
@@ -603,24 +609,24 @@ function _uc_payflowpro_recurring_get_schedule($search) {
 
 
 /*******************************************************************************
- * 
+ *
  * Genearl Control Panel Section
- *  
+ *
  ******************************************************************************/
 
 function uc_payflowpro_user_panel() {
   global $user;
-  
+
   $page = '';
   $page .= '<h2>' . t('Recurring Payments Panel') . '</h2>';
-  
-  if(user_access('administer store') && arg(0) == 'admin') { 
-    $query = "SELECT pfp_pid pid, pfp_profile_id as profile_id, pfp_uid as uid, pfp_origid as pn_ref 
+
+  if(user_access('administer store') && arg(0) == 'admin') {
+    $query = "SELECT pfp_pid pid, pfp_profile_id as profile_id, pfp_uid as uid, pfp_origid as pn_ref
                          FROM {uc_payflowpro_recurring_profiles}";
     $base_url = 'admin/store/settings/uc_recurring/administer';
   }
   else {
-    $query = "SELECT pfp_pid pid, pfp_profile_id as profile_id, pfp_uid as uid, pfp_origid as pn_ref 
+    $query = "SELECT pfp_pid pid, pfp_profile_id as profile_id, pfp_uid as uid, pfp_origid as pn_ref
                          FROM {uc_payflowpro_recurring_profiles} WHERE pfp_uid = " . $user->uid;
     $base_url = 'user/' . arg(1) . '/pfp_cpanel';
     //TODO: investigate old HEAD version:
@@ -630,11 +636,11 @@ function uc_payflowpro_user_panel() {
     else {
       $user_id = $user->uid;
     }
-    $query = "SELECT pfp_pid pid, pfp_profile_id as profile_id, pfp_uid as uid, pfp_origid as pn_ref 
+    $query = "SELECT pfp_pid pid, pfp_profile_id as profile_id, pfp_uid as uid, pfp_origid as pn_ref
                          FROM {uc_payflowpro_recurring_profiles} WHERE pfp_uid = " . $user_id;
     $base_url = 'user/' . arg(1) . '/pfp_cpanel';*/
   }
-  
+
   // Dispatcher
   $profile_id = arg(0) == 'user' ? arg(3) : arg(5);
   if(arg(4) && ( strstr($profile_id, 'RP') || strstr($profile_id, 'RT') ) ) {
@@ -645,9 +651,9 @@ function uc_payflowpro_user_panel() {
       return uc_payflowpro_cpanel_view_profile($profile_id);
     }
   }
-  
+
   $rs = pager_query($query);
-  
+
   $page .= theme('pager');
   $header = array(t('Username'), t('Profile name'), t('Profile ID'), t('PN Ref'), '-');
   $rows = array();
@@ -658,7 +664,7 @@ function uc_payflowpro_user_panel() {
     if($crow->uid != '') {
       $ul = user_load(array('uid' => $crow->uid));
     }
-    
+
     $row[] = theme('username', $ul);
     $row[] = $ul->name;
     $row[] = $crow->profile_id;
@@ -674,29 +680,30 @@ function uc_payflowpro_user_panel() {
 function uc_payflowpro_cpanel_view_profile($pid) {
   global $user;
   $mode = substr($pid,0,2) == 'RT' ? 'test' : 'live';
-  $check = db_num_rows(db_query("SELECT pfp_pid, pfp_profile_id, pfp_uid, pfp_origid, pfp_profile_id FROM {uc_payflowpro_recurring_profiles} WHERE pfp_uid = %d", $user->uid));
+  $check = db_result(db_query("SELECT count(*) FROM {uc_payflowpro_recurring_profiles} WHERE pfp_uid = %d", $user->uid));
   if($check < 1 && !user_access('administer store')) {
+  	//TODO: there is a better way to show this kind of error
     return t('You are not authorized to view this information.');
   }
-  
+
   if(arg(0) == 'admin') {
     $base_url = 'admin/' . arg(1) . '/pfp_cpanel/' . $pid;
   }
   else {
     $base_url = 'user/' . arg(1) . '/pfp_cpanel/' . $pid;
   }
-  
+
   $page = '';
   $page .= '<h2>' . t('Viewing profile %profile_id', array('%profile_id' => $pid)) . '</h2>';
   if($mode == 'test') {
     $page .= '<h2><font color="red">' . t('THIS IS A TEST PROFILE. TRANSACTION WILL BE RUN IN TEST MODE') . '</font></h2>';
     drupal_set_message(t('THIS IS A TEST PROFILE. TRANSACTION WILL BE RUN IN TEST MODE'), 'error');
   }
-  
+
   #$response = PayflowProClient::submitTransaction(trim(_text_xml()));
   //$response = _payflowpro_send_transaction(trim(_test_xml(1)));
   //$page .= '<pre>' . print_r($response,1) . '</pre>';
-  
+
   $profile = new PayflowProRecurring($pid, _uc_payflowpro_get_auth());
   $profile->setMode($mode);
   $try = $profile->refresh();
@@ -707,7 +714,7 @@ function uc_payflowpro_cpanel_view_profile($pid) {
   $page .= '<table><tr><td>' . theme('payflow_address', t('Bill to'), $profile->getBillTo()) .
     '</td><td>&nbsp;</td><td>' . theme('payflow_address', t('Ship to'), $profile->getShipTo()) .
     '</td></tr></table>';
-    
+
   // Payment information
   // Commenting out the fieldset, width is too wide
   /*$form = array();
@@ -717,19 +724,19 @@ function uc_payflowpro_cpanel_view_profile($pid) {
     '#value' => theme('payflowpro_tender', $profile->getTender()),
   );*/
   $page .= theme('payflowpro_tender', $profile->getTender());
-  
+
   if($profile->getStatus() == 'ACTIVE' && $profile->getLastPaymentStatus() != 0) {
     drupal_set_message(t(strtoupper('This profile is scheduled to be deactived due to non-payment.')), 'error');
   }
-  
+
   // Status
   $order_id = db_result(db_query("SELECT order_id FROM {uc_payflowpro_recurring_profiles} WHERE pfp_profile_id = '%s'", $profile->getProfileID()));
   $vid = db_result(db_query("SELECT vid FROM {uc_payflowpro_recurring_profiles} WHERE order_id = %d", $order_id));
   $product = node_load(array('vid' => $vid));
-  
+
   $form = array();
   $status = array();
-  
+
   $cancel = $profile->getStatus() == 'ACTIVE' ? l(t('cancel'), $base_url . '/cancel') : '';
   $status['Product Name'] = $product ? '<strong>' . l($product->title, 'node/' . $product->nid) . '</strong>' : '<strong><font color="red">' . t('Unable to find associated product') . '</font></strong>';
   $status['Status'] = $profile->getStatus() . ' ' . $cancel;
@@ -757,9 +764,9 @@ function uc_payflowpro_cpanel_view_profile($pid) {
     '#title' => t('Payment status'),
     '#value' => $status,
   );
-  $page .= drupal_render($form);  
-  
-  
+  $page .= drupal_render($form);
+
+
   // Payment History
   if($profile->getLastPaymentStatus() !== null) {
     $history = $profile->getPaymentHistory();
@@ -792,35 +799,35 @@ function uc_payflowpro_cpanel_view_profile($pid) {
     '#value' => $status);
 
   $page .= drupal_render($form);
-  
+
   return $page;
 }
 
 function theme_payflowpro_tender($tender) {
   $output = '';
-  
+
   if(isset($tender['Card'])) {
     $tender = $tender['Card'];
     $output .= '<strong>' . t('Card') . "</strong>: {$tender->CardNum}<br />";
     $output .= '<strong>' . t('Expiration') . "</strong>: " . substr($tender->ExpDate,0,2) . '/' . substr($tender->ExpDate,2,2) . '<br />';
   }
-  
+
   return $output;
 }
 
 function theme_payflow_address($title = 'Address', $address) {
   $output = '';
-  
+
   $output .= t('Address') . ":{$address['Street']}<br/>";
   $output .= t('City') . ":{$address['City']}<br/>";
   $output .= t('State') . ":{$address['State']}<br/>";
   $output .= t('Zip') . ":{$address['Zip']}<br/>";
   $output .= t('Country') . ":{$address['Country']}<br/>";
-  
+
   $render = array('#type' => 'fieldset',
                   '#title' => $title,
                   '#value' => $output);
-  
+
   return drupal_render($render);
 }
 function _payment_payflowpro_auth_info() {
@@ -841,7 +848,7 @@ function uc_payflowpro_cancel_form($profile_id, $cancel_path) {
   $form['order_id'] = array('#type' => 'hidden', '#value' => $order_id);
   $form['#destination'] = $cancel_path;
   $form['post_dest'] = array('#type' => 'hidden', '#value' => $cancel_path);
-  
+
   return confirm_form($form, t('Are you sure you wish to cancel your subscription?'), $cancel_path,
     t('This will stop the renewal of payments and remove you from the
       subscribed to service.'),
@@ -851,10 +858,10 @@ function uc_payflowpro_cancel_form($profile_id, $cancel_path) {
 /**
  * Submit form for a profile from the cpanel
  */
-function uc_payflowpro_cancel_form_submit($form_id, $form_values) {
-  
+function uc_payflowpro_cancel_form_submit($form, &$form_state) {
+
   // Load up the profile
-  $profile = new PayflowProRecurring($form_values['profile_id'], _uc_payflowpro_get_auth());
+  $profile = new PayflowProRecurring($form_state['values']['profile_id'], _uc_payflowpro_get_auth());
   $profile->refresh();
   // Cancel
   $try = $profile->cancel();
@@ -865,9 +872,9 @@ function uc_payflowpro_cancel_form_submit($form_id, $form_values) {
     }
   }
   // We can add more code here to un-subscribe, deactivate certain features
-  
+
   drupal_set_message(t('Your subscription has been canceled.'));
-  return $form_values['post_dest'];
+  $form_state['redirect'] = $form_state['values']['post_dest'];
 }
 
 
@@ -899,6 +906,6 @@ function _uc_payflowpro_ec_subscription_cancel($txnid) {
     ec_recurring_process_expiries();
   }
   // Ubercart
-  
+
   return;
 }

@@ -1,7 +1,8 @@
 // $Id$
 
-UC Payflow Pro 6.x-1.1, xxxx-xx-xx
+UC Payflow Pro 6.x-1.1-beta1, xxxx-xx-xx
 ------------------------------
+#495382 by jcfiala, kwinters: Remaining Menu / Form / Install D6 Conversion
 
 
 UC Payflow Pro 6.x-1.0-beta2, 2009-5-26
