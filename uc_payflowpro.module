@@ -1067,11 +1067,17 @@ function _uc_payflowpro_cc_info_xml($order_id) {
     $cc_exp = $cc_exp_year .  $cc_exp_month;
   }
 
+  $cc_owner = $order->payment_details['cc_owner'];
+  if (empty($cc_owner)) {
+    //This avoids displaying 'NotProvided' as the billing name.
+    $cc_owner = $order->billing_first_name . ' ' . $order->billing_last_name;
+  }
+
   $xml = '
               <Card>
                 <CardNum>' . check_plain($order->payment_details['cc_number']) . '</CardNum>
                 <ExpDate>' . check_plain($cc_exp) . '</ExpDate>
-                <NameOnCard>' . check_plain($order->payment_details['cc_owner']) . '</NameOnCard>
+                <NameOnCard>' . check_plain($cc_owner). '</NameOnCard>
                 <CVNum>' . check_plain($order->payment_details['cc_cvv']) . '</CVNum>
               </Card>
         ';

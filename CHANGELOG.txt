@@ -3,7 +3,7 @@
 UC Payflow Pro 6.x-1.1-beta1, xxxx-xx-xx
 ------------------------------
 #495382 by jcfiala, kwinters: Remaining Menu / Form / Install D6 Conversion
-
+#499350 by kwinters: Fixed Billing Name Reported as NotProvided
 
 UC Payflow Pro 6.x-1.0-beta2, 2009-5-26
 ------------------------------
