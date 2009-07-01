@@ -1148,7 +1148,7 @@ function _uc_payflowpro_do_ec_xml($order) {
           </' . $payment_action . '>
           </DoExpressCheckout>';
 
-  return uc_payflowpro_wrap_xml($xml);
+  return _uc_payflowpro_wrap_xml($xml);
 }
 
 // Generate XML for Recurring profiles
