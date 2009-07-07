@@ -2,6 +2,7 @@
 
 UC Payflow Pro 6.x-1.1-beta1, xxxx-xx-xx
 ------------------------------
+#494606 by kwinters: Implementing start dates for remaining period types
 #507268 by jrguitar21: Undefined Function in Express Checkout Review
 #495382 by jcfiala, kwinters: Remaining Menu / Form / Install D6 Conversion
 #499350 by kwinters: Fixed Billing Name Reported as NotProvided

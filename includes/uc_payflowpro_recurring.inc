@@ -134,58 +134,75 @@ function _uc_pfp_period_map() {
  * -- SMYR: Twice Every Year - Every six months on the same date as the first payment.
  * -- YEAR: Yearly - Every 12 months on the same date as the first payment.
  *
- * //TODO Correct the start dates for the other types
- *
  */
-function _uc_pfp_calc_start_date($period) {
-  $today = time();
+function _uc_pfp_calc_start_date($period, $fromTime = -1) {
+  // Monthly / yearly periods need to have consistent billing dates across months with varying numbers of days.
+  // For monthly, round the 29/30/31st up to the first of the next month so that the buyer doesn't get short-changed.
+  // Apply the same rule to yearly / semi-yearly for consistency and so that leap years don't have issues. 
+  $noEndOfMonthDays = TRUE;
+  $fromTime = intval($fromTime);
+  if ($fromTime < 1)
+  {
+    $fromTime = time();
+  }
+  
   switch($period) {
-    case 'W':
-      $delta = 60 * 60 * 24 * 7;
+    case 'W': // Weekly
+      $start_time = strtotime('+1 week', $fromTime);
+      $noEndOfMonthDays = FALSE;
       break;
-    case 'B':
-      $delta = 60 * 60 * 24 * 7 * 2;
+    case 'B': // Every Two Weeks
+      $start_time = strtotime('+2 weeks', $fromTime);
+      $noEndOfMonthDays = FALSE;
       break;
-    // Semi-monthly starts on the 1st or 15th
-    // So, if we're > 15th, then start on the 1st,
-    // else start on the 15th
-    // -- NOT IMPL
-    case 'SM':
-      $delta = 60 * 60 * 24 * 7;
+    case 'SM': // Twice Every Month
+      // Need the 15th or 1st of the month, at least 15 days from now (avoid cutting any pay period short).
+      // Special case: orders placed exactly on the 1st or 15th of the month don't have to be rounded up.
+      // Rounding them up would result in a full month before the first recurrence instead of semi-monthly.
+      $currentDayOfMonth = intval( date('j', $fromTime) );
+      if ($currentDayOfMonth == 1) {
+        // Next charge = 15th of current month
+        $start_time = strtotime( date('Y-m-15 H:i:s', $fromTime) );
+      } elseif ($currentDayOfMonth == 15) {
+        // Charge on 1st of next month (advance to next month then set day to 1st).
+        // Note: +1 month will advance the month counter by 2 when next month is too short, so use 16 < x < 28 days. 
+        $start_time = strtotime( date('Y-m-1 H:i:s', strtotime('+20 days', $fromTime)) );
+      } elseif ($currentDayOfMonth > 15) {
+        // At least 15 days = 15th of next month.
+        $start_time = strtotime( date('Y-m-15 H:i:s', strtotime('+20 days', $fromTime)) );
+      } else { // $currentDayOfMonth < 15 and > 1
+        // At least 15 days = 1st of next month.
+        // Use +1 month here, because it will never overflow into +2 months since no month has < 15 days.
+        $start_time = strtotime( date('Y-m-1 H:i:s', strtotime('+1 month', $fromTime)) );
+      }
       break;
-    // Every 28 days
-    case '4W':
-      $delta = 60 * 60 * 24 * 28;
+    case '4W': // Every Four Weeks
+      $start_time = strtotime('+4 weeks', $fromTime);
+      $noEndOfMonthDays = FALSE;
       break;
-    // Same date every month
-    // On the next month, arbitrariy the
-    // 15th of that month to avoid the 31st of a month
-    // when other months only have 30, and Feb with 28/29
-    // if D == 30, D = 28
-    // -- NOT IMPL
-    case 'M':
-      $delta = 60 * 60 * 24 * 7;
+    case 'M': // Monthly
+      $start_time = strtotime('+1 month', $fromTime);
       break;
-    // Same date every 3 months, again, if D == 30, D = 28
-    // -- NOT IMPL
-    case 'Q':
-      $delta = 60 * 60 * 24 * 7;
+    case 'Q': // Quarterly
+      $start_time = strtotime('+3 months', $fromTime);
       break;
-    // Every 6 months
-    // if D == 30, D = 28
-    // -- NOT IMPL
-    case 'SA':
-      $delta = 60 * 60 * 24 * 7;
+    case 'SA': // Twice Every Year
+      $start_time = strtotime('+6 months', $fromTime);
       break;
-    // Same daate eady year
-    // if D == 30, D = 28
-    case 'Y':
-      // What about leap years?
-      $delta = (int)60 * 60 * 24 * 365.25;
+    case 'Y': // Yearly
+      $start_time = strtotime('+1 year', $fromTime);
       break;
   }
-  $start_date = $today + $delta;
-  return $start_date;
+  
+  if ($noEndOfMonthDays && intval( date('j', $start_time) ) > 28) {
+    // Add one week to increase the month counter while automatically handling any year increase.
+    // Then set the day of the month to the first, retaining time of day for consistency (YYYY-MM-DD HH:MM:SS). 
+    // Basing this off of the start date calculated above is for periods > 1 month.
+    $monthAfterOldStart = strtotime('+1 week', $start_time);
+    $start_time = strtotime(date('Y-m-1 H:i:s', $monthAfterOldStart));
+  }
+  
+  return $start_time;
 }
 /*******************************************************************************
  *
@@ -356,7 +373,7 @@ function uc_payflowpro_recurring_schedules() {
     if($row->terms == 0) {
       $row->terms = t('Unlimited');
     }
-    $tr[] = "Renewed each " . $period_map[$row->period] . " for $row->terms";
+    $tr[] = "Renewed " . $period_map[$row->period] . " for $row->terms periods.";
     $links = array();
     $links[] = array('title' => t('edit'), 'href' => 'admin/store/settings/uc_recurring/schedules/' . $row->sid . '/edit');
     $links[] = array('title' => t('delete'), 'href' => 'admin/store/settings/uc_recurring/schedules/' . $row->sid . '/delete');
@@ -393,6 +410,7 @@ function uc_payflowpro_recurring_schedule_edit_form($form_state, $sid = '') {
     '#title' => t('Period'),
     '#options' => _uc_payflowpro_recurring_periods(),
     '#default_value' => $s->period,
+    '#description' => t('Monthly and yearly periods will advance the recurring date for the 29/30/31 of the month to the first of the next month.'),
   );
   if(is_numeric($sid)) {
     $form['sid'] = array('#type' => 'hidden', '#value' => $sid);
@@ -479,7 +497,7 @@ function uc_payflowpro_recurring_products() {
     if($row->terms == 0) {
       $row->terms = t('Unlimited');
     }
-    $tr[] = "Renewed each " . $period_map[$row->period] . " for $row->terms";
+    $tr[] = "Renewed " . $period_map[$row->period] . " for $row->terms periods.";
     $links = array();
     $links[] = array('title' => t('edit'), 'href' => 'admin/store/settings/uc_recurring/products/' . $row->uc_pfp_rpid . '/edit');
     $links[] = array('title' => t('delete'), 'href' => 'admin/store/settings/uc_recurring/products/' . $row->uc_pfp_rpid . '/delete');

@@ -201,5 +201,3 @@ function uc_payflowpro_uninstall() {
   variable_del('uc_payflowpro_vendor');
   variable_del('uc_payment_method_payflowpro_ec_checkout');
 }
-
-?>
