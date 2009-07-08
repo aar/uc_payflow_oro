@@ -56,13 +56,12 @@ function uc_payflowpro_recurring_charge_process($order, $result) {
       # Start date is calcuated as term + 1, meaning if weekly, start next week; monthly start next month
       $start_date = _uc_pfp_calc_start_date($schedule->period);
       $profile->setStartDate(format_date($start_date, 'custom', 'mdY'));
-      $profile->setTerm($info['terms']); // Terms come from the user, not the schedule
+      $profile->setTerm($info['terms']); // Terms can come from the user
       $profile->setPayPeriod(_uc_to_pfp_format_period($schedule->period)); // Period can NOT come from the user
 
       $result = $profile->save();
       $result = $result->RecurringProfileResult;
       // Place the profile result into our database
-      // Should probabley store the model
       if($result->Message == 'Approved') {
         db_query("INSERT INTO {uc_payflowpro_recurring_profiles}
                  (order_id, nid, vid, pfp_uid, pfp_profile_id,
@@ -247,14 +246,21 @@ function _uc_pfp_calc_start_date($period, $fromTime = -1) {
  *
  ******************************************************************************/
 function uc_payflowpro_checkout_pane() {
+  // Hide the panel if the recurring feature is not enabled.
   if(variable_get('uc_payflowpro_enable_recurring', false) == false) {
+    return;
+  }
+  // Also hide the panel entirely if no items in the cart are renewable.
+  $rs = uc_payflowpro_recurring_get_renewable_cart_products_rs();
+  $row = db_fetch_array($rs);
+  if (empty($row)) {
     return;
   }
   $panes[] = array(
     'id' => 'pfp_recurring_co_pane',
     'callback' => 'uc_payflowpro_recurring_checkout_pane_cart',
-    'title' => t('Renewable Products Options'),
-    'desc' => t("Display options to renew/repurchase certain products on a schedule."),
+    'title' => t('Renewal Information'),
+    'desc' => t('Details and options for renewable products (required if renewal is to be used).'),
     'weight' => 2,
     'process' => true,
     'collapsible' => FALSE,
@@ -263,11 +269,9 @@ function uc_payflowpro_checkout_pane() {
 }
 
 function uc_payflowpro_recurring_checkout_pane_cart($op, &$arg1, $arg2) {
-
   switch($op) {
     case 'view':
-      $description = t('You may select which products would like to auto
-                       renew.');
+      $description = t('Please review this information about your renewable products.');
       $contents = uc_payflowpro_recurring_co_pane_contents();
       return array('description' => $description,
                    'contents' => $contents);
@@ -285,69 +289,83 @@ function uc_payflowpro_recurring_checkout_pane_cart($op, &$arg1, $arg2) {
   return;
 }
 
-function uc_payflowpro_recurring_co_pane_contents($order = '') {
+function uc_payflowpro_recurring_get_renewable_cart_products_rs() {
   $items = uc_cart_get_contents();
   $vids = array();
   foreach($items as $k => $item) {
     $vids[] =  $item->vid;
   }
 
-  $rs = db_query("SELECT model, terms, period, urp.vid FROM {uc_payflowpro_recurring_products} urp INNER JOIN {uc_products} p ON urp.vid = p.vid
-                 INNER JOIN {uc_payflowpro_recurring_schedules} urs ON urp.sid = urp.sid
-                 WHERE urp.vid IN('%s')", implode(',', $vids));
+  return db_query("SELECT n.title, model, terms, period, urp.vid FROM {uc_payflowpro_recurring_products} urp INNER JOIN {uc_products} p ON urp.vid = p.vid
+                 INNER JOIN {uc_payflowpro_recurring_schedules} urs ON urp.sid = urs.sid INNER JOIN {node} n on n.nid = p.nid
+                 WHERE urp.vid IN(%s)", implode(',', $vids));
+}
+
+function uc_payflowpro_recurring_co_pane_contents($order = '') {
+  $period_map = _uc_payflowpro_recurring_periods();
+  $rs = uc_payflowpro_recurring_get_renewable_cart_products_rs();
   $form = array();
-  $form['renewable_products']['#tree'] = true;
-  $form['renewable_products']['#theme'] = 'uc_pfp_recurring_co_pane_table';
   while($row = db_fetch_array($rs)) {
-    $form['renewable_products'][$row['vid']]['renew'] = array(
-      '#type' => 'checkbox',
-      '#title' => 'renew',
-    );
+    // Store some information in the form that will be used to create the recurring profile.
     $form['renewable_products'][$row['vid']]['vid'] = array(
-      '#type' => 'hidden',
+      '#type' => 'value',
       '#value' => $row['vid']);
     $form['renewable_products'][$row['vid']]['model'] = array(
+      '#type' => 'value',
       '#value' => $row['model'],
     );
     $form['renewable_products'][$row['vid']]['period'] = array(
+      '#type' => 'value',
       '#value' => $row['period'],
     );
-    $form['renewable_products'][$row['vid']]['terms'] = array(
-      '#type' => 'select',
-      '#title' => t('Terms'),
-      '#options' => drupal_map_assoc(range(0,12)),
-    );
+    
+    /*
+     * If the schedule is set to zero terms (unlimited), display a note but no options.
+     * Eventually, we may need to add a new term option (or new setting) that lets
+     * a site admin indicate that users can choose whether or not to auto-renew, but
+     * the only term available is unlimited.
+     */ 
+    $scheduleMaxTerms = intval($row['terms']);
+    if ($scheduleMaxTerms < 1) {
+      $form['renewable_products'][$row['vid']]['note'] = array(
+        '#type' => 'markup',
+        '#value' => '<p>' . t('@product will automatically renew @period.', array(
+          '@product' => $row['title'],
+          '@period' => $period_map[$row['period']],
+        )) . '</p>',
+      );
+      $form['renewable_products'][$row['vid']]['renew'] = array(
+        '#type' => 'value',
+        '#value' => 1,
+      );
+      $form['renewable_products'][$row['vid']]['terms'] = array(
+        '#type' => 'value',
+        '#value' => 0, // Unlimited renewals value.
+      );
+    } else { // User can configure, let them choose
+      $termOptions = array_merge( 
+        array( 0 => t('Until I Cancel') ) , 
+        range(1,$scheduleMaxTerms)
+      );
+      $form['renewable_products'][$row['vid']]['renew'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Automatically renew @product @period', array(
+          '@product' => $row['title'],
+          '@period' => $period_map[$row['period']],
+        )),
+      );
+      $form['renewable_products'][$row['vid']]['terms'] = array(
+        '#type' => 'select',
+        '#title' => t('Maximum number of times to renew @product', array(
+          '@product' => $row['title'],
+        )),
+        '#options' => drupal_map_assoc($termOptions),
+      );
+    }
   }
 
   return $form;
 }
-
-function theme_uc_pfp_recurring_co_pane_table($form_values) {
-  $header = array(t('Renew?'), t('Cart Item'), t('Auto-renew'), t('How many times would you like to renew?'));
-  foreach(element_children($form_values) as $id => $item_vid) {
-    $row = array();
-    $item = $form_values[$item_vid];
-    unset($item['renew']['#title']);
-    unset($item['model']['#title']);
-    unset($item['period']['#title']);
-    unset($item['terms']['#title']);
-    $row[] = drupal_render($item['renew']);
-    $row[] = drupal_render($item['model']);
-    $row[] = drupal_render($item['period']);
-    $row[] = drupal_render($item['terms']);
-    $output .= drupal_render($item['vid']);
-    $rows[] = $row;
-    unset($form_values[$id]);
-  }
-  if( count($rows) == 0 ) {
-    return '<div><em>' . t('You have no renewable items in your cart.') . '</em></div>';;
-  }
-  $output .= theme('table', $header, $rows);
-
-  return $output;
-}
-
-
 
 /*******************************************************************************
  *
@@ -355,9 +373,9 @@ function theme_uc_pfp_recurring_co_pane_table($form_values) {
  *
  ******************************************************************************/
 function uc_payflowpro_recurring_settings() {
+  _uc_payflowpro_recurring_required();
+  
   $page = '';
-
-
   $page .= '<h2>' . t('Recurring Stats') . '</h2>';
   $header = array(' ', ' ');
   $rows = array();
@@ -377,6 +395,8 @@ function uc_payflowpro_recurring_settings() {
 }
 
 function uc_payflowpro_recurring_schedules() {
+  _uc_payflowpro_recurring_required();
+  
   $page = '';
 
   if(arg(6) == 'edit') {
@@ -434,12 +454,15 @@ function uc_payflowpro_recurring_schedule_edit_form($form_state, $sid = '') {
     '#title' => t('Description'),
     '#default_value' => $s->description,
   );
-  $terms = drupal_map_assoc(range(0,12));
+  $terms = drupal_map_assoc( array_merge( 
+    array( 0 => 'Renew Forever' ),
+    range( 1, 36 )
+  ));
   $form['terms'] = array(
     '#type' => 'select',
     '#title' => t('Terms'),
     '#options' => $terms,
-    '#description' => t('Set to 0 for an unlimited number of renewals until the user cancels.'),
+    '#description' => t('If Renew Forever, the shopper will be forced to automatically renew in the cart.'),
     '#default_value' => $s->terms,
   );
   $form['period'] = array(
@@ -456,7 +479,6 @@ function uc_payflowpro_recurring_schedule_edit_form($form_state, $sid = '') {
   else {
     $form['add'] = array('#type' => 'submit', '#value' => t('Add Schedule'));
   }
-
 
   return $form;
 }
@@ -499,6 +521,8 @@ function uc_payflowpro_recurring_schedule_delete_form_submit($form, &$form_state
  * Recurring Products for
  */
 function uc_payflowpro_recurring_products() {
+  _uc_payflowpro_recurring_required();
+  
   $page = '';
 
   if(arg(6) == 'edit') {
@@ -642,6 +666,17 @@ function uc_payflowpro_recurring_products_delete_form_submit($form, &$form_state
 /*************
  * Helper function
  */
+
+/**
+ * For functions that must have recurring invoices enabled to work correctly,
+ * warn the user if it is not.
+ */
+function _uc_payflowpro_recurring_required() {
+  if( ! variable_get('uc_payflowpro_enable_recurring', 0) ) {
+    trigger_error(t('Warning: You need to enable recurring products in the gateway settings to use this tool.'));
+  }
+}
+
 function _uc_payflowpro_recurring_get_schedule($search) {
   if(!$search['vid']) {
     $item = node_load($search['nid']);
@@ -672,6 +707,8 @@ function _uc_payflowpro_recurring_get_schedule($search) {
 function uc_payflowpro_user_panel() {
   global $user;
 
+  _uc_payflowpro_recurring_required();
+  
   $page = '';
   $page .= '<h2>' . t('Recurring Payments Panel') . '</h2>';
 
@@ -710,7 +747,7 @@ function uc_payflowpro_user_panel() {
   $rs = pager_query($query);
 
   $page .= theme('pager');
-  $header = array(t('Username'), t('Profile name'), t('Profile ID'), t('PN Ref'), '-');
+  $header = array(t('Username'), t('Profile name'), t('Profile ID'), t('PN Ref'), 'Details');
   $rows = array();
   $row = array();
   while($crow = db_fetch_object($rs)) {
@@ -724,7 +761,7 @@ function uc_payflowpro_user_panel() {
     $row[] = $ul->name;
     $row[] = $crow->profile_id;
     $row[] = $crow->pn_ref;
-    $row[] = l('view', $base_url . '/' . $crow->profile_id . '/view');
+    $row[] = l('View', $base_url . '/' . $crow->profile_id . '/view');
     $rows[] = $row;
   }
   $page .= theme('table', $header, $rows);

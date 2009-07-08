@@ -316,7 +316,7 @@ function uc_payflowpro_settings_form() {
   );
   $form['payflowpro_settings']['recurring']['uc_payflowpro_enable_recurring'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Enabled recurring on products'),
+    '#title' => t('Enable recurring products'),
     '#default_value' => variable_get('uc_payflowpro_enable_recurring', FALSE),
     '#description' => t('Checking this box will enabled recurring profiles on
                         products that have an expiration.'),
