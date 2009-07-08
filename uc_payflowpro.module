@@ -1358,7 +1358,7 @@ function _uc_payflowpro_recurring_process_recurring() {
  ******************************************************************************/
 // Terms
 function _uc_payflowpro_recurring_periods($lu = '') {
-  return _uc_pfp_period_map();
+  return _uc_display_period_map();
 }
 
 // check for required modules

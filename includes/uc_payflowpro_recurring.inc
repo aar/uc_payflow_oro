@@ -96,17 +96,54 @@ function _uc_payflowpro_format_address($order, $type) {
   $address = array();
   return $address;
 }
+
+/**
+ * Returns the PFP format needed for requests for a given internal period type.
+ */
 function _uc_to_pfp_format_period($period) {
   $map = _uc_pfp_period_map();
   return $map[$period];
 }
 
+/**
+ * Returns a map from the internal period type to the PFP request type.
+ */
 function _uc_pfp_period_map() {
-  static $map;
-  if($map) {
-    return $map;
+  static $uc_pfp_period_map;
+  if($uc_pfp_period_map) {
+    return $uc_pfp_period_map;
   }
-  $map = array(
+  $uc_pfp_period_map = array(
+    'W'  => 'WEEK',
+    'B'  => 'BIWK',
+    'SM' => 'SMMO',
+    '4W' => 'FRWK',
+    'M'  => 'MONT',
+    'Q'  => 'QTER',
+    'SA' => 'SMYR',
+    'Y'  => 'YEAR',
+  );
+
+  return $uc_pfp_period_map;
+}
+
+/**
+ * Returns display text for a given internal period type.
+ */
+function _uc_to_display_format_period($period) {
+  $map = _uc_pfp_display_map();
+  return $map[$period];
+}
+
+/**
+ * Returns a map from the internal period type to its display text.
+ */
+function _uc_display_period_map() {
+  static $uc_display_period_map;
+  if($uc_display_period_map) {
+    return $uc_display_period_map;
+  }
+  $uc_display_period_map = array(
     'W' => 'Weekly',
     'B' => 'Bi-weekly',
     'SM' => 'Semi-monthly',
@@ -117,7 +154,7 @@ function _uc_pfp_period_map() {
     'Y' => 'Yearly',
   );
 
-  return $map;
+  return $uc_display_period_map;
 }
 
 
@@ -487,7 +524,7 @@ function uc_payflowpro_recurring_products() {
   $header = array(t('Name/Model'), t('Terms'), '');
   $rows = array();
   $tr = array();
-  $rs = db_query("SELECT uc_pfp_rpid, urp.sid, model, period, urp.vid FROM {uc_payflowpro_recurring_products} urp
+  $rs = db_query("SELECT uc_pfp_rpid, urp.sid, model, period, terms, urp.vid FROM {uc_payflowpro_recurring_products} urp
                   INNER JOIN {uc_products} up ON urp.vid = up.vid
                   INNER JOIN {uc_payflowpro_recurring_schedules} urs ON urp.sid = urs.sid");
   $period_map = _uc_payflowpro_recurring_periods();
@@ -577,8 +614,8 @@ function uc_payflowpro_recurring_products_edit_form_submit($form, &$form_state) 
   else {
     $try = db_query("UPDATE {uc_payflowpro_recurring_products}
                     SET sid = %d
-                    WHERE uc_pfp_id = %d",
-                    $form_state['values']['sid'], $form_state['values']['uc_pfp_id']);
+                    WHERE uc_pfp_rpid = %d",
+                    $form_state['values']['sid'], $form_state['values']['uc_pfp_rpid']);
     if(!$try) {
       drupal_set_message(t('There was an error adding your products.'), 'error');
     }
