@@ -890,7 +890,7 @@ function _uc_payflowpro_submit_xml($xml, $mode = NULL) {
   $curl_response = curl_exec($ch);
 
   if (!$curl_response) {
-    watchdog('uc_payflowpro', 'Connecting to PayFlow server failed: ' . curl_error($ch), WATCHDOG_ERROR);
+    watchdog('uc_payflowpro', 'Connecting to PayFlow server failed: %error', array('%error' => curl_error($ch)), WATCHDOG_ERROR);
   }
 
   curl_close($ch);

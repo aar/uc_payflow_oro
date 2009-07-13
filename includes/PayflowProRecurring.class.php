@@ -667,7 +667,7 @@ class PayflowProClient {
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, FALSE);
     $curl_response = curl_exec($ch);
     if (!$curl_response) {
-      watchdog('payment_payflowpro', 'Connecting to PayFlow server failed: ' . curl_error($ch), WATCHDOG_ERROR);
+      watchdog('payment_payflowpro', 'Connecting to PayFlow server failed: %error', array('%error' => curl_error($ch)), WATCHDOG_ERROR);
     }
     curl_close($ch);
   
@@ -794,7 +794,7 @@ function _my_submit($xml_request, $mode = 'test') {
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, FALSE);
     $curl_response = curl_exec($ch);
     if (!$curl_response) {
-      watchdog('payment_payflowpro', 'Connecting to PayFlow server failed: ' . curl_error($ch), WATCHDOG_ERROR);
+      watchdog('payment_payflowpro', 'Connecting to PayFlow server failed: %error', array('%error' => curl_error($ch)), WATCHDOG_ERROR);
     }
     curl_close($ch);
   
