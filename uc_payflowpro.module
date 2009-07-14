@@ -992,12 +992,12 @@ function _uc_payflowpro_invoice_xml($order) {
               <InvNum>' . intval($order->order_id) . '</InvNum>
               <Comment>' . check_plain(_uc_get_skus($order)) . '</Comment>
               <BillTo>
-                <Name>' . check_plain($order->billing_first_name . ' ' . $order->billing_last_name) . '</Name>
+                <Name>' . trim(check_plain($order->billing_first_name . ' ' . $order->billing_last_name)) . '</Name>
                 <Phone>' . check_plain($order->billing_phone) . '</Phone>
                 <EMail>' . check_plain($order->primary_email) . '</EMail>
                 <CustCode>' . $order->uid . '</CustCode>
                 <Address>
-                  <Street>' . check_plain($order->billing_street1) . '</Street>
+                  <Street>' .trim(check_plain($order->billing_street1 . ' ' . $order->billing_street2)) . '</Street>
                   <City>' . check_plain($order->billing_city) . '</City>
                   <State>' . check_plain(uc_get_zone_code($order->billing_zone)) . '</State>
                   <Zip>' . check_plain($order->billing_postal_code) . '</Zip>
@@ -1009,7 +1009,7 @@ function _uc_payflowpro_invoice_xml($order) {
                 <Phone>' . check_plain($order->delivery_phone) . '</Phone>
                 <EMail>' . check_plain($order->primary_email) . '</EMail>
                 <Address>
-                  <Street>' . check_plain($order->delivery_street1) . '</Street>
+                  <Street>' .trim(check_plain($order->delivery_street1 . ' ' . $order->delivery_street2)) . '</Street>
                   <City>' . check_plain($order->delivery_city) . '</City>
                   <State>' . check_plain(uc_get_zone_code($order->delivery_zone)) . '</State>
                   <Zip>' . check_plain($order->delivery_postal_code) . '</Zip>
@@ -1178,12 +1178,12 @@ function _uc_payflowpro_recurring_profile($order, $opt = array()) {
   $xml = '            <Invoice>
               <InvNum>' . intval($order->order_id) . '</InvNum>
               <BillTo>
-                <Name>' . check_plain($order->billing_first_name . ' ' . $order->billing_last_name) . '</Name>
+                <Name>' . trim(check_plain($order->billing_first_name . ' ' . $order->billing_last_name)) . '</Name>
                 <Phone>' . check_plain($order->billing_phone) . '</Phone>
                 <EMail>' . check_plain($order->primary_email) . '</EMail>
                 <CustCode>' . check_plain($order->uid) . '</CustCode>
                 <Address>
-                  <Street>' . check_plain($order->billing_street1) . '</Street>
+                  <Street>' .trim(check_plain($order->billing_street1 . ' ' . $order->billing_street2)) . '</Street>
                   <City>' . check_plain($order->billing_city) . '</City>
                   <State>' . check_plain(uc_get_zone_code($order->billing_zone)) . '</State>
                   <Zip>' . check_plain($order->billing_postal_code) . '</Zip>
@@ -1195,7 +1195,7 @@ function _uc_payflowpro_recurring_profile($order, $opt = array()) {
                 <Phone>' . check_plain($order->delivery_phone) . '</Phone>
                 <EMail>' . check_plain($order->primary_email) . '</EMail>
                 <Address>
-                  <Street>' . check_plain($order->delivery_street1) . '</Street>
+                  <Street>' .trim(check_plain($order->delivery_street1 . ' ' . $order->delivery_street2)) . '</Street>
                   <City>' . check_plain($order->delivery_city) . '</City>
                   <State>' . check_plain(uc_get_zone_code($order->delivery_zone)) . '</State>
                   <Zip>' . check_plain($order->delivery_postal_code) . '</Zip>

@@ -37,10 +37,9 @@ function uc_payflowpro_recurring_charge_process($order, $result) {
       // object up to create a new profile.
       $profile->createNew();
       $profile->setName($site_key . '_' . $cuser->name);
+      $profile->setCompanyName( (($order->billing_company) ? $order->billing_company : $order->delivery_company));
       $profile->setBillTo(_uc_payflowpro_format_address($order, 'billto'));
-      if($can_ship) {
-        $profile->setShipTo(_uc_payflowpro_format_address($order, 'shipto'));
-      }
+      $profile->setShipTo(_uc_payflowpro_format_address($order, 'shipto'));
       $profile->setEmail($cuser->mail);
 
       // Tedner
@@ -91,8 +90,50 @@ function _uc_payflowpro_get_auth() {
   return $auth;
 }
 
-function _uc_payflowpro_format_address($order, $type) {
+/**
+ * Returns a billing or shipping address from the order in the format
+ * that is needed by the recurring class.
+ */
+function _uc_payflowpro_format_address($order, $type = 'billto') {
+  //TODO: This function is somewhat redundant with the address XML generation
+  // block used for normal transactions, condense them.
+
+  if ($type == 'shipto') {
+    $prefix = 'delivery';
+  } else {
+    $prefix = 'billing';
+  }
+
+  $sourceData = array(
+    'FirstName' => 'billing_first_name',
+    'LastName' => 'billing_last_name',
+    'Phone' => 'billing_phone',
+    'EMail' => 'primary_email',
+    'CustCode' => 'uid',
+    'Street' => 'billing_street1',
+    'Street2' => 'billing_street2',
+    'City' => 'billing_city',
+    'State' => 'billing_zone',
+    'Zip' => 'billing_postal_code',
+    'Country' => 'billing_country',
+  );
+
   $address = array();
+
+  foreach ($sourceData as $newKey => $orderKey)
+  {
+    $orderKey = str_replace('billing',$prefix,$orderKey);
+    $address[$newKey] = $order->$orderKey;
+  }
+
+  // Special field handling for state and country codes.
+  $country = uc_get_country_data(array('country_id' => $address['Country']));
+  if ($country === FALSE) {
+    $country = array(0 => array('country_iso_code_2' => 'US'));
+  }
+  $address['State'] = uc_get_zone_code($address['State']);
+  $address['Country'] = $country[0]['country_iso_code_2'];
+
   return $address;
 }
 
@@ -174,14 +215,14 @@ function _uc_display_period_map() {
 function _uc_pfp_calc_start_date($period, $fromTime = -1) {
   // Monthly / yearly periods need to have consistent billing dates across months with varying numbers of days.
   // For monthly, round the 29/30/31st up to the first of the next month so that the buyer doesn't get short-changed.
-  // Apply the same rule to yearly / semi-yearly for consistency and so that leap years don't have issues. 
+  // Apply the same rule to yearly / semi-yearly for consistency and so that leap years don't have issues.
   $noEndOfMonthDays = TRUE;
   $fromTime = intval($fromTime);
   if ($fromTime < 1)
   {
     $fromTime = time();
   }
-  
+
   switch($period) {
     case 'W': // Weekly
       $start_time = strtotime('+1 week', $fromTime);
@@ -201,7 +242,7 @@ function _uc_pfp_calc_start_date($period, $fromTime = -1) {
         $start_time = strtotime( date('Y-m-15 H:i:s', $fromTime) );
       } elseif ($currentDayOfMonth == 15) {
         // Charge on 1st of next month (advance to next month then set day to 1st).
-        // Note: +1 month will advance the month counter by 2 when next month is too short, so use 16 < x < 28 days. 
+        // Note: +1 month will advance the month counter by 2 when next month is too short, so use 16 < x < 28 days.
         $start_time = strtotime( date('Y-m-1 H:i:s', strtotime('+20 days', $fromTime)) );
       } elseif ($currentDayOfMonth > 15) {
         // At least 15 days = 15th of next month.
@@ -229,15 +270,15 @@ function _uc_pfp_calc_start_date($period, $fromTime = -1) {
       $start_time = strtotime('+1 year', $fromTime);
       break;
   }
-  
+
   if ($noEndOfMonthDays && intval( date('j', $start_time) ) > 28) {
     // Add one week to increase the month counter while automatically handling any year increase.
-    // Then set the day of the month to the first, retaining time of day for consistency (YYYY-MM-DD HH:MM:SS). 
+    // Then set the day of the month to the first, retaining time of day for consistency (YYYY-MM-DD HH:MM:SS).
     // Basing this off of the start date calculated above is for periods > 1 month.
     $monthAfterOldStart = strtotime('+1 week', $start_time);
     $start_time = strtotime(date('Y-m-1 H:i:s', $monthAfterOldStart));
   }
-  
+
   return $start_time;
 }
 /*******************************************************************************
@@ -318,13 +359,13 @@ function uc_payflowpro_recurring_co_pane_contents($order = '') {
       '#type' => 'value',
       '#value' => $row['period'],
     );
-    
+
     /*
      * If the schedule is set to zero terms (unlimited), display a note but no options.
      * Eventually, we may need to add a new term option (or new setting) that lets
      * a site admin indicate that users can choose whether or not to auto-renew, but
      * the only term available is unlimited.
-     */ 
+     */
     $scheduleMaxTerms = intval($row['terms']);
     if ($scheduleMaxTerms < 1) {
       $form['renewable_products'][$row['vid']]['note'] = array(
@@ -343,8 +384,8 @@ function uc_payflowpro_recurring_co_pane_contents($order = '') {
         '#value' => 0, // Unlimited renewals value.
       );
     } else { // User can configure, let them choose
-      $termOptions = array_merge( 
-        array( 0 => t('Until I Cancel') ) , 
+      $termOptions = array_merge(
+        array( 0 => t('Until I Cancel') ) ,
         range(1,$scheduleMaxTerms)
       );
       $form['renewable_products'][$row['vid']]['renew'] = array(
@@ -374,7 +415,7 @@ function uc_payflowpro_recurring_co_pane_contents($order = '') {
  ******************************************************************************/
 function uc_payflowpro_recurring_settings() {
   _uc_payflowpro_recurring_required();
-  
+
   $page = '';
   $page .= '<h2>' . t('Recurring Stats') . '</h2>';
   $header = array(' ', ' ');
@@ -396,7 +437,7 @@ function uc_payflowpro_recurring_settings() {
 
 function uc_payflowpro_recurring_schedules() {
   _uc_payflowpro_recurring_required();
-  
+
   $page = '';
 
   if(arg(6) == 'edit') {
@@ -454,7 +495,7 @@ function uc_payflowpro_recurring_schedule_edit_form($form_state, $sid = '') {
     '#title' => t('Description'),
     '#default_value' => $s->description,
   );
-  $terms = drupal_map_assoc( array_merge( 
+  $terms = drupal_map_assoc( array_merge(
     array( 0 => 'Renew Forever' ),
     range( 1, 36 )
   ));
@@ -522,7 +563,7 @@ function uc_payflowpro_recurring_schedule_delete_form_submit($form, &$form_state
  */
 function uc_payflowpro_recurring_products() {
   _uc_payflowpro_recurring_required();
-  
+
   $page = '';
 
   if(arg(6) == 'edit') {
@@ -708,7 +749,7 @@ function uc_payflowpro_user_panel() {
   global $user;
 
   _uc_payflowpro_recurring_required();
-  
+
   $page = '';
   $page .= '<h2>' . t('Recurring Payments Panel') . '</h2>';
 
@@ -791,10 +832,6 @@ function uc_payflowpro_cpanel_view_profile($pid) {
     $page .= '<h2><font color="red">' . t('THIS IS A TEST PROFILE. TRANSACTION WILL BE RUN IN TEST MODE') . '</font></h2>';
     drupal_set_message(t('THIS IS A TEST PROFILE. TRANSACTION WILL BE RUN IN TEST MODE'), 'error');
   }
-
-  #$response = PayflowProClient::submitTransaction(trim(_text_xml()));
-  //$response = _payflowpro_send_transaction(trim(_test_xml(1)));
-  //$page .= '<pre>' . print_r($response,1) . '</pre>';
 
   $profile = new PayflowProRecurring($pid, _uc_payflowpro_get_auth());
   $profile->setMode($mode);

@@ -23,16 +23,16 @@ class PayflowProRecurring {
   protected $profile_next_payment = null;
   protected $profile_exp_data = array();
   protected $profile_status = 'N/A';
-  
+
   protected $payment_history = array();
   protected $auth = array();
   protected $mode = null;
-  
+
   protected $return_code = '';
   protected $return_msg = '';
-  
+
   private $last_payment_status = '';
-  
+
   protected $update_items = array();
   protected $create_new = false;
   protected $loaded = false;
@@ -52,18 +52,18 @@ class PayflowProRecurring {
       }
     }
   }
-  
+
   function createNew() {
     if($this->loaded) {
       throw new Exception('Attempt to CREATE NEW PROFILE on and already loaded PROFILE');
     }
     $this->create_new = true;
   }
-  
+
   function setMode($mode) {
     $this->mode = $mode;
   }
-  
+
   public function refresh() {
     $this->load();
   }
@@ -75,7 +75,7 @@ class PayflowProRecurring {
     $profile = $this->runInquiry();
     $profile = (object)$profile->RecurringProfileResult;
     $this->loaded = true;
-    
+
     // Set the varts
     $this->profile_name = (string)$profile->Name;
     $this->profile_start = (string)$profile->Start;
@@ -96,10 +96,10 @@ class PayflowProRecurring {
     $this->profile_billto = (array)$profile->BillTo->Address;
     $this->profile_shipto = (array)$profile->ShipTo->Address;
     $this->profile_exp_data = (array)$profile->ExpData;
-    
+
     // Load Payment History
     $history = $this->runInquiry(true); // True to get the history
-    
+
     $history = (object)$history->RecurringProfileResult;
     $history = array($history);
     foreach($history as $k => $payment) {
@@ -107,7 +107,7 @@ class PayflowProRecurring {
         continue;
       }
       $payment = (object)$payment->RPPaymentResult;
-      $payment->Amount = (float)$payment->Amt['Currency'];  
+      $payment->Amount = (float)$payment->Amt['Currency'];
       $this->payment_history[] = (array)$payment;
     }
     if(count($this->payment_history) === 0) {
@@ -119,7 +119,7 @@ class PayflowProRecurring {
     }
     return;
   }
-  
+
   public function getLastPaymentStatus() {
     return $this->last_payment_status;
   }
@@ -132,7 +132,7 @@ class PayflowProRecurring {
       return null;
     }
   }
-  
+
   /**
    * Function to abstract the recurring functions methods
    * of the xml
@@ -140,7 +140,7 @@ class PayflowProRecurring {
   private function runInquiry($history = false) {
     $profile_id = $this->getProfileID();
     $options = array();
-    
+
     # Build XML
     $transaction = '';
     // Wrap tine inquirty
@@ -148,37 +148,37 @@ class PayflowProRecurring {
     // Wrap in a profile
     //$options['custref'] = $this->getProfileID();
     $transaction = $this->profileWrap($transaction, $options);
-    
+
     // Final wrap
     $xml = $this->recurringXMLPayWrap($transaction);
-    
+
     // Send XML
     $response = $this->sendTransaction($xml);
-    
+
     // Return the SimpleXml Object
     return $response;
   }
-  
+
   /**
    * Cancels this subscription
    */
   public function cancel() {
     $profile_id = $this->getProfileID();
     $options = array();
-    
+
     # Build XML
     $transaction = '';
     // Get the cancel transaction xml
     $action = $this->getCancelXML();
     // Wrap the cancel transction in a profile
     $transaction = $this->profileWrap($action);
-    
+
     // Final Wrap
     $xml = $this->recurringXMLPayWrap($transaction);
-    
+
     // Send XML
     $response = $this->sendTransaction(trim($xml));
-    
+
     if($response->RecurringProfileResult->Result == 0) {
       return true;
     }
@@ -189,14 +189,14 @@ class PayflowProRecurring {
     }
     return $response;
   }
-  
+
   public function getReturnCode() {
     return $this->return_code;
   }
   public function getReturnMsg() {
     return $this->return_msg;
   }
-  
+
   /**
    * Saves/Updates this profiles
    * This is only used when creating a new
@@ -206,80 +206,80 @@ class PayflowProRecurring {
     $this->isCreateNew();
     # Build XML
     $transaction = '';
-    
+
     // Fetch the RPData
     $rpdataxml .= $this->getAddXML();
-    
+
     // Wrap in a profile
     //$options['custref'] = $this->getProfileID();
     $transaction = $this->profileWrap($rpdataxml, $options);
-    
+
     // Final wrap
     $xml = $this->recurringXMLPayWrap($transaction);
-    
+
     // Send XML
     $response = $this->sendTransaction($xml);
     // Setup the xml
-    
+
     return $response;
   }
-  
+
   private function parsePFPResponse($response, $type = '') {
   }
-  
+
   function payflowproRecurringFactory($args = array()) {
   }
-  
+
   private function sendTransaction($xml_request) {
-    
+
     $xml_request = trim($xml_request);
-    
+
     if(module_exists('payment_payflowpro')) {
       $response = _payflowpro_send_transaction($xml_request, $this->mode);
     }
     else if(module_exists('uc_payflowpro')) {
       $response = _uc_payflowpro_submit_xml($xml_request, $this->mode);
     }
-    
+
     return $response;
   }
-  
+
   function findProfile() {
   }
-  
+
   private function profileWrap($action, $options = array()) {
-    
+
     if($options['id']) {
       $id_opt = ' ID=' . $options['id'];
     }
     if($options['custref']) {
       $custref_opt = ' CustRef="' . $options['custref'] . '"';
     }
-    
+
     $xml = '<RecurringProfile' . $id_opt . $custref_opt . '>' . $action . '</RecurringProfile>';
     return $xml;
   }
-  
+
   private function getActionInquiry($history = false) {
     if($history) {
       $xml = '<Inquiry>
-                <ProfileID>' . $this->getProfileID() . '</ProfileID>
+                <ProfileID>' . check_plain($this->getProfileID()) . '</ProfileID>
                 <PaymentHistory>Y</PaymentHistory>
               </Inquiry>';
     }
     else {
       $xml = '<Inquiry>
-                <ProfileID>' . $this->getProfileID() . '</ProfileID>
+                <ProfileID>' . check_plain($this->getProfileID()) . '</ProfileID>
               </Inquiry>';
     }
     return $xml;
   }
-  
+
   private function getCancelXML() {
-    $xml = '<Cancel><ProfileID>' . $this->getProfileID() . '</ProfileID></Cancel>';
+    $xml = '<Cancel><ProfileID>' . check_plain($this->getProfileID()) . '</ProfileID></Cancel>';
     return $xml;
   }
-  
+
   /**
    * Call this function to add someone.
    * The getRPDataXML is a HELPER function for this one.
@@ -292,7 +292,7 @@ class PayflowProRecurring {
       '</Add>';
     return $xml;
   }
-  
+
   /**
    * Do NOT call this function directly. This is a helper function
    * to other functions.
@@ -301,19 +301,20 @@ class PayflowProRecurring {
     $optionstrans = '';
     if($optional_tran != null) {
       $optionstrans = '<OptionalTrans>Sale</OptionalTrans>
-              <OptionalTransAmt>' . $optional_tran['amt'] . '</OptionalTransAmt>';
+              <OptionalTransAmt>' . check_plain($optional_tran['amt']) . '</OptionalTransAmt>';
     }
     $xml = '
             <RPData>
-              <Name>' . $this->getName() . '</Name>
-              <TotalAmt>' . $this->getAmt() . '</TotalAmt>
-              <Start>' . $this->getStartDate() . '</Start>
-              <Term>' . $this->getTerm() . '</Term>
-              <PayPeriod>' . $this->getPayPeriod() . '</PayPeriod>
-              <EMail>' . $this->getEmail() . '</EMail>
-              ' . $optionstrans . 
+              <Name>' . check_plain($this->getName()) . '</Name>
+              <TotalAmt>' . check_plain($this->getAmt()) . '</TotalAmt>
+              <Start>' . check_plain($this->getStartDate()) . '</Start>
+              <Term>' . check_plain($this->getTerm()) . '</Term>
+              <PayPeriod>' . check_plain($this->getPayPeriod()) . '</PayPeriod>
+              <EMail>' . check_plain($this->getEmail()) . '</EMail>
+              <CompanyName>' . check_plain($this->getCompanyName()) . '</CompanyName>
+              ' . $optionstrans .
               $this->getAddressXML('billto') .
-              $this->getAddressXML('shipto') . 
+              $this->getAddressXML('shipto') .
             '</RPData>';
     return $xml;
   }
@@ -321,19 +322,24 @@ class PayflowProRecurring {
     $xml = '';
     $tender = $this->profile_tender;
     if($tender['CVNum']) {
-      $cvnum = '<CVNum>' . $tender['CVNum'] . '</CVNum>';
+      $cvnum = '<CVNum>' . check_plain($tender['CVNum']) . '</CVNum>';
+    }
+    if (empty($tender['NameOnCard']))
+    {
+      $address = $this->getBillTo();
+      $tender['NameOnCard'] = $address['Name'];
     }
     $xml = '<Tender>
               <Card>
-              <CardNum>' . $tender['CardNum'] . '</CardNum>
-              <ExpDate>' . $tender['ExpDate'] . '</ExpDate>
-              <NameOnCard>' . $tender['NameOnCard'] . '</NameOnCard>
+              <CardNum>' . check_plain($tender['CardNum']) . '</CardNum>
+              <ExpDate>' . check_plain($tender['ExpDate']) . '</ExpDate>
+              <NameOnCard>' . check_plain($tender['NameOnCard']) . '</NameOnCard>
               ' . $cvnum . '
               </Card>
               </Tender>';
     return $xml;
   }
-  
+
   /**
    *
    * This function runs through the items that have been set
@@ -342,7 +348,7 @@ class PayflowProRecurring {
   public function update() {
     return;
   }
-  
+
   public function setUpdate($item, $val) {
     $this->update_items[$item] = $val;
     return;
@@ -357,44 +363,44 @@ class PayflowProRecurring {
   public function getCurrentUpdateState() {
     return $this->update_items;
   }
-  
+
   public function getProfileID() {
     return $this->profile_id;
   }
-  
+
   public function parseResults(SimpleXMLElement $result) {
     $status_code = (int)$result->Result;
     $status_msg = (string)$result->Message;
     $this->setStatus((string)$result->Status);
   }
-  
+
   private function setStatus($status) {
     $this->profile_status = $status;
   }
-  
+
   public function getName() {
     return $this->profile_name;
   }
   public function setName($name) {
     $this->profile_name = $name;
   }
-  
+
   public function getTerm() {
-    return $this->profile_term;  
+    return $this->profile_term;
   }
 
   public function setTerm($term) {
     $this->isCreateNew();
     $this->profile_term = $term;
   }
-  
+
   private function isCreateNew() {
     if(!$this->create_new) {
       throw new Exception('ERROR: NOT IN CORRECT STATE');
     }
     return;
   }
-  
+
   public function setAuth($auth) {
     $this->auth = (array)$auth;
   }
@@ -418,35 +424,35 @@ class PayflowProRecurring {
     $this->isCreateNew();
     $this->profile_start = $date;
   }
-  
+
   public function getPayPeriod() {
     return $this->profile_payperiod;
   }
   public function setPayPeriod($period) {
     $this->profile_payperiod = $period;
   }
-  
+
   public function getAmt() {
     return $this->profile_amt;
   }
   public function setAmt($amt) {
     $this->profile_amt = $amt;
   }
-  
+
   public function getEmail() {
     return $this->profile_email;
   }
   public function setEmail($email) {
     $this->profile_email = $email;
   }
-  
+
   public function getCompanyName() {
     return $this->profile_company_name;
   }
   public function setCompanyName($name) {
     $this->profile_company_name = $name;
   }
-  
+
   // Pehraps return these as classes
   public function getBillTo() {
     return $this->profile_billto;
@@ -455,7 +461,7 @@ class PayflowProRecurring {
     if(!$this->create_new) {
       throw new Exception('Attempt to set billing information out of CREATE NEW mode.');
     }
-    $this->profile_billto = $billing;
+    $this->profile_billto = $this->fixAddress($billing);
   }
   public function getShipTo() {
     return $this->profile_shipto;
@@ -464,14 +470,32 @@ class PayflowProRecurring {
     if(!$this->create_new) {
       throw new Exception('Attempt to set shippin information out of CREATE NEW mode.');
     }
-    $this->profile_shipto = $shipping;
+    $this->profile_shipto = $this->fixAddress($shipping);
   }
-  
+  function fixAddress($address) {
+    // The name may be split into parts when passed in.  Convert into a single field to match
+    // what PFP expects us to send and will return later.
+    if (isset($address['FirstName']) || isset($address['LastName']) )
+    {
+      $address['Name'] = trim($address['FirstName'] . ' ' . $address['LastName']);
+      unset($address['FirstName'],$address['LastName']);
+    }
+
+    // Same goes for the street address: it must be one line (but inputs are a little different).
+   if (isset($address['Street2']))
+    {
+      $address['Street'] = trim($address['Street'] . ' ' . $address['Street2']);
+      unset($address['Street2']);
+    }
+
+    return $address;
+  }
+
   // Read-only vars
   public function getPaymentsLeft() {
     return $this->profile_payments_left;
   }
-  
+
   public function getNextPaymentDate($format = 'raw') {
     switch($format) {
       case 'raw':
@@ -485,7 +509,7 @@ class PayflowProRecurring {
         return format_date($date, 'custom', $format);
         break;
     }
-    
+
     return $this->profile_next_payment;
   }
   public function getAggregateAmt() {
@@ -509,7 +533,7 @@ class PayflowProRecurring {
   public function getPaymentHistory() {
     return $this->payment_history;
   }
-  
+
   public function getStartDate($format = 'raw') {
     if($format != 'raw') {
       $date = $this->parsePayFlowDate($this->profile_start);
@@ -520,7 +544,7 @@ class PayflowProRecurring {
     }
     return $formated_date;
   }
-  
+
   // Helpers
   /**
    * Format a date into Payflow time
@@ -541,28 +565,34 @@ class PayflowProRecurring {
       $type = 'ShipTo';
       $addy = $this->getShipTo();
     }
-    
-    if(count($addy) == 0) {
+
+    if(empty($addy) || !is_array($addy)) {
       return ;
     }
-    
+
+    // Note: name / street are pre-combined in this context.
     $xml = '<' . $type . '>
+            <Name>' . check_plain($addy['Name']) . '</Name>
+            <Phone>' . check_plain($addy['Phone']) . '</Phone>
+            <EMail>' . check_plain($addy['EMail']) . '</EMail>
+            <CustCode>' . check_plain($addy['CustCode']) . '</CustCode>
             <Address>
-              <Street>' . $addy['Street'] . '</Street>
-              <City>' . $addy['City'] . '</City>
-              <State>' .  $addy['State'] . '</State>
-              <Zip>' . $addy['Zip'] . '</Zip>
+              <Street>' . check_plain($addy['Street']) . '</Street>
+              <City>' . check_plain($addy['City']) . '</City>
+              <State>' .  check_plain($addy['State']) . '</State>
+              <Zip>' . check_plain($addy['Zip']) . '</Zip>
+              <Country>' . check_plain($addy['Country']) . '</Zip>
             </Address>
           </' . $type . '>';
     return $xml;
   }
-  
-  
+
+
   /************************************************************
-   * 
+   *
    * Static functions
-   *  
-   ************************************************************ 
+   *
+   ************************************************************
    */
   /**
    * Auth array in the args:
@@ -577,233 +607,25 @@ class PayflowProRecurring {
      $partner = $auth['partner'];
      $user = $auth['user'];
      $password = $auth['password'];
-     
+
      $xml = '<?xml version="1.0" encoding="UTF-8"?>
       <XMLPayRequest Timeout="30" version = "2.0" xmlns="http://www.paypal.com/XMLPay">
         <RequestData>
-          <Vendor>' . $vendor . '</Vendor>
-          <Partner>' . $partner . '</Partner>
+          <Vendor>' . check_plain($vendor) . '</Vendor>
+          <Partner>' . check_plain($partner) . '</Partner>
           <RecurringProfiles>
           ' . $transaction . '
           </RecurringProfiles>
         </RequestData>
         <RequestAuth>
           <UserPass>
-            <User>' . $user . '</User>
-            <Password>' . $password . '</Password>
+            <User>' . check_plain($user) . '</User>
+            <Password>' . check_plain($password) . '</Password>
           </UserPass>
         </RequestAuth>
       </XMLPayRequest>';
-      
+
       return $xml;
   }
-  
-}
-
-class PayflowProResult {
-  function __construct() {
-  }
-  
-  function setStatusCode($status) {
-  }
-}
-
-
-class PayflowProClient {
-// Submit request to PayFlow
-  
-  private $mode = null;
-  
-  public function __construct() {
-    $this->mode = variable_get('ec_payflowpro_tx_mode', 'test');
-  }
-  
-  public function setMode($mode) {
-    $this->mode = $mode;
-  }
-  
-  public static function submitTransaction($xml_request, $mode = 'test') {
-    // DEBUG: Return false to not submit
-    
-    // Info
-    $certpath = variable_get('ec_payflowpro_sdk_cert_path', '');
-    
-    if ($mode == 'test') {
-      $url = 'https://pilot-payflowpro.verisign.com/transaction:443';
-    }
-    else {
-      $url = 'https://payflowpro.verisign.com/transaction:443';
-      
-    }
-  
-    $request_id = sha1($xml_request . time());
-    $user_agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
-  
-    $headers[] = "Content-Type: text/xml"; // either text/namevalue or text/xml
-    $headers[] = "X-VPS-Timeout: 30";
-    $headers[] = "X-VPS-VIT-OS-Name: Linux";  // Name of your Operating System (OS)
-    $headers[] = "X-VPS-VIT-OS-Version: RHEL 4";  // OS Version
-    $headers[] = "X-VPS-VIT-Client-Type: PHP/cURL";  // Language you are using
-    $headers[] = "X-VPS-VIT-Client-Version: 1.0";  // For your info
-    $headers[] = "X-VPS-VIT-Client-Architecture: x86";  // For your info
-    $headers[] = "X-VPS-VIT-Client-Certification-Id: 33baf5893fc2123d8b191d2d011b7fdc"; // This header requirement will be removed
-    $headers[] = "X-VPS-VIT-Integration-Product: Ubercart";  // For your info, would populate with application name
-    $headers[] = "X-VPS-VIT-Integration-Version: 2.0"; // Application version
-    $headers[] = "X-VPS-Request-ID: " . $request_id;
-  
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_USERAGENT, $user_agent);
-    curl_setopt($ch, CURLOPT_HEADER, FALSE);
-    curl_setopt($ch, CURLOPT_POST, TRUE);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $xml_request);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-    curl_setopt($ch, CURLOPT_CAPATH, $certpath);
-    //curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
-    curl_setopt($ch, CURLOPT_FORBID_REUSE, TRUE);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, FALSE);
-    $curl_response = curl_exec($ch);
-    if (!$curl_response) {
-      watchdog('payment_payflowpro', 'Connecting to PayFlow server failed: %error', array('%error' => curl_error($ch)), WATCHDOG_ERROR);
-    }
-    curl_close($ch);
-  
-    if ($curl_response == '') {
-      $response = FALSE;
-    }
-    else {
-      $xml_response = simplexml_load_string($curl_response);
-      $response = $xml_response->ResponseData->TransactionResults->TransactionResult;
-    }
-    return $response;
-  }
-  
 
 }
-
-
-// REG FUN
-function _test_xml($id = 1) {
-    $xml[1] = '
-<?xml version="1.0" encoding="UTF-8"?>
-    <XMLPayRequest Timeout="30" version = "2.0">
-      <RequestData>
-        <Vendor>wbrnewmedia</Vendor>
-        <Partner>PayPal</Partner>
-        <RecurringProfiles>
-          <RecurringProfile>
-            <Profile>
-              <Inquiry>
-                <ProfileID>RP0000000012</ProfileID>
-              </Inquiry>
-            </Profile>
-          </RecurringProfile>
-        </RecurringProfiles>
-      </RequestData>
-      <RequestAuth>
-        <UserPass>
-          <User>WebApp</User>
-          <Password>WebApp123</Password>
-        </UserPass>
-      </RequestAuth>
-    </XMLPayRequest>';
-    
-    $xml[2] = '
-<?xml version="1.0" encoding="UTF-8"?>
-<XMLPayRequest Timeout="40" version="2.0" xmlns="http://www.verisign.com/XMLPay">
- <RequestData>
-        <Vendor>wbrnewmedia</Vendor>
-        <Partner>PayPal</Partner>
-  <Transactions>
-<Transaction>
-<Sale>
-<PayData>
-<Invoice>
-<NationalTaxIncl>false</NationalTaxIncl>
-<TotalAmt>24.97</TotalAmt>
-</Invoice>
-<Tender>
-<Card>
-<CardType>visa</CardType>
-<CardNum>5105105105105100</CardNum>
-<ExpDate>200911</ExpDate>
-<NameOnCard/>
-</Card>
-</Tender>
-</PayData>
-</Sale>
-</Transaction>
-  </Transactions>
- </RequestData>
-      <RequestAuth>
-        <UserPass>
-          <User>WebApp</User>
-          <Password>WebApp123</Password>
-        </UserPass>
-      </RequestAuth>
-</XMLPayRequest>';
-
-    return $xml[$id];
-  }
-
-function _my_submit($xml_request, $mode = 'test') {
-    // DEBUG: Return false to not submit
-    
-    // Info
-    $certpath = variable_get('ec_payflowpro_sdk_cert_path', '');
-    
-    if ($mode == 'test') {
-      $url = 'https://pilot-payflowpro.verisign.com/transaction:443';
-    }
-    else {
-      $url = 'https://payflowpro.verisign.com/transaction:443';
-      
-    }
-  
-    $request_id = sha1($xml_request . time());
-    $user_agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
-  
-    $headers[] = "Content-Type: text/xml"; // either text/namevalue or text/xml
-    $headers[] = "X-VPS-Timeout: 30";
-    $headers[] = "X-VPS-VIT-OS-Name: Linux";  // Name of your Operating System (OS)
-    $headers[] = "X-VPS-VIT-OS-Version: RHEL 4";  // OS Version
-    $headers[] = "X-VPS-VIT-Client-Type: PHP/cURL";  // Language you are using
-    $headers[] = "X-VPS-VIT-Client-Version: 1.0";  // For your info
-    $headers[] = "X-VPS-VIT-Client-Architecture: x86";  // For your info
-    $headers[] = "X-VPS-VIT-Client-Certification-Id: 33baf5893fc2123d8b191d2d011b7fdc"; // This header requirement will be removed
-    $headers[] = "X-VPS-VIT-Integration-Product: Ubercart";  // For your info, would populate with application name
-    $headers[] = "X-VPS-VIT-Integration-Version: 2.0"; // Application version
-    $headers[] = "X-VPS-Request-ID: " . $request_id;
-  
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_USERAGENT, $user_agent);
-    curl_setopt($ch, CURLOPT_HEADER, FALSE);
-    curl_setopt($ch, CURLOPT_POST, TRUE);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $xml_request);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-    curl_setopt($ch, CURLOPT_CAPATH, $certpath);
-    //curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
-    curl_setopt($ch, CURLOPT_FORBID_REUSE, TRUE);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, FALSE);
-    $curl_response = curl_exec($ch);
-    if (!$curl_response) {
-      watchdog('payment_payflowpro', 'Connecting to PayFlow server failed: %error', array('%error' => curl_error($ch)), WATCHDOG_ERROR);
-    }
-    curl_close($ch);
-  
-    if ($curl_response == '') {
-      $response = FALSE;
-    }
-    else {
-      $xml_response = simplexml_load_string($curl_response);
-      $response = $xml_response->ResponseData->TransactionResults->TransactionResult;
-    }
-    return $response;
-  }
