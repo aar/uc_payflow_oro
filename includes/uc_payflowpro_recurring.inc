@@ -753,25 +753,26 @@ function uc_payflowpro_user_panel() {
   $page = '';
   $page .= '<h2>' . t('Recurring Payments Panel') . '</h2>';
 
-  if(user_access('administer store') && arg(0) == 'admin') {
+  if (arg(0) == 'admin') { // Admin entry point.
+    // Admin version only accessible to admins, error out entirely if not one.
+    if( ! user_access('administer store') ) {
+      return drupal_access_denied();
+    }
+
     $query = "SELECT pfp_pid pid, pfp_profile_id as profile_id, pfp_uid as uid, pfp_origid as pn_ref
                          FROM {uc_payflowpro_recurring_profiles}";
     $base_url = 'admin/store/settings/uc_recurring/administer';
   }
-  else {
-    $query = "SELECT pfp_pid pid, pfp_profile_id as profile_id, pfp_uid as uid, pfp_origid as pn_ref
-                         FROM {uc_payflowpro_recurring_profiles} WHERE pfp_uid = " . $user->uid;
-    $base_url = 'user/' . arg(1) . '/pfp_cpanel';
-    //TODO: investigate old HEAD version:
-    /*if(user_access('administer store')) {
-      $user_id = arg(1);
+  else { // User account entry point.
+    // If it's not your UID in user/%/pfp_cpanel and you're not an admin, denied.
+    $user_id = intval(arg(1));
+    if( $user_id != $user->uid && ! user_access('administer store') ) {
+      return drupal_access_denied();
     }
-    else {
-      $user_id = $user->uid;
-    }
+
     $query = "SELECT pfp_pid pid, pfp_profile_id as profile_id, pfp_uid as uid, pfp_origid as pn_ref
                          FROM {uc_payflowpro_recurring_profiles} WHERE pfp_uid = " . $user_id;
-    $base_url = 'user/' . arg(1) . '/pfp_cpanel';*/
+    $base_url = 'user/' .$user_id . '/pfp_cpanel';
   }
 
   // Dispatcher
@@ -813,10 +814,15 @@ function uc_payflowpro_user_panel() {
 function uc_payflowpro_cpanel_view_profile($pid) {
   global $user;
   $mode = substr($pid,0,2) == 'RT' ? 'test' : 'live';
-  $check = db_result(db_query("SELECT count(*) FROM {uc_payflowpro_recurring_profiles} WHERE pfp_uid = %d", $user->uid));
+
+  $pidWhereClause = ''; // If no PID is provided, check for any results before showing the panel.
+  if ($pid != '') {
+    // PID provided, check perms specifically on that profile.
+    $pidWhereClause = " AND pfp_profile_id='%s'";
+  }
+  $check = db_result(db_query("SELECT count(*) FROM {uc_payflowpro_recurring_profiles} WHERE pfp_uid = '%d' $pidWhereClause", $user->uid, $pid));
   if($check < 1 && !user_access('administer store')) {
-  	//TODO: there is a better way to show this kind of error
-    return t('You are not authorized to view this information.');
+  	return drupal_access_denied();
   }
 
   if(arg(0) == 'admin') {

@@ -1,7 +1,8 @@
 // $Id$
 
-UC Payflow Pro 6.x-1.1-beta1, xxxx-xx-xx
+UC Payflow Pro 6.x-1.1-beta1, 2009-07-14
 ------------------------------
+#505514 by kwinters: Account Panel Recurring Tab Permissions Improvement
 #494492 by kwinters: Sending better address data to PFP
 #517402 by cjdavis, kwinters: Fixed old syntax for watchdog() call
 #494476 by kwinters: Fixed In-Cart Recurring Period

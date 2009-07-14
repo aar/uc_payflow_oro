@@ -100,14 +100,14 @@ function uc_payflowpro_menu() {
     'type' => MENU_CALLBACK,
   );
 
-  if (arg(0) == 'user') {
-    $items['user/%/pfp_cpanel'] = array(
-      'title' => 'Account Panel',
-      'page callback' => 'uc_payflowpro_user_panel',
-      'type' => MENU_LOCAL_TASK,
-      'access arguments' => array('access content'),
-    );
-  }
+  // If you can view your own orders, allow you to see the recurring
+  // profiles tab on the user account page.
+  $items['user/%/pfp_cpanel'] = array(
+    'title' => 'Recurring Payments',
+    'page callback' => 'uc_payflowpro_user_panel',
+    'type' => MENU_LOCAL_TASK,
+    'access arguments' => array('view own orders'),
+  );
 
   return $items;
 }
