@@ -9,15 +9,15 @@
 
 function _payflowpro_validate_required_sale_fields($transaction) {
 	global $PAYFLOWPRO_SALE_REQUIRED_FIELDS;
-	
+
 	$transaction_keys = array_keys($transaction);
-	
+
 	foreach($PAYFLOWPRO_SALE_REQUIRED_FIELDS as $key) {
 		if(!in_array($key, $transaction_keys)) {
 			return false;
 		}
 	}
-	
+
 	return true;
 }
 
@@ -26,7 +26,7 @@ function _payflowpro_validate_required_sale_fields($transaction) {
  * There are some error messages that are helpful to the user while others need to be
  * a bit more vauge so that the user gets enough information to make a good choice about
  * what to do next.
- * 
+ *
  * @see _payflow_process_submit for usage
  */
 function _payflow_process_error_message($result_code) {
@@ -50,11 +50,11 @@ function _payflow_process_error_message($result_code) {
 
 function _payflowpro_code_to_string($result_code) {
 	$result_code = (int)$result_code;
-	
+
 	if($result_code < 0) {
 		return _payflowpro_error_code_to_string($result_code);
 	}
-	
+
 	return _payflowpro_transaction_code_to_string($result_code);
 }
 
@@ -104,11 +104,11 @@ function _payflowpro_error_code_to_string($error_code) {
 			return t('Parameter list format error: invalid [ ] name length clause');
 		case -28:
 			return t('Parameter list format error: name');
-		case -29:		
+		case -29:
 			return t('Failed to initialize SSL connection');
 		case -30:
 			return t('Invalid timeout value');
-		case -31: 
+		case -31:
 			return t('The certificate chain did not validate, no local certificate found');
 		case -32:
 			return t('The certificate chain did not validate, common name did not match URL');
@@ -143,7 +143,7 @@ function _payflowpro_error_code_to_string($error_code) {
 		case -111:
 			return t('The following error occurred while initializing from message file: ');
 		case -113:
-			return t('Unable to round and truncate the currency value simultaneously');		
+			return t('Unable to round and truncate the currency value simultaneously');
 		default:
 			return t('Unknown communications error');
 	}
@@ -330,7 +330,7 @@ function _payflowpro_transaction_code_to_string($result_code) {
 	}
 }
 
-//TODO: was in pre-D6 HEAD, determine usefulness and add in if needed
+// This was in pre-D6 HEAD, but never used.  Left here because the text may be useful at some point.
 /*function _payflowpro_recurring_payment_code_to_string($code) {
 	switch($code) {
 		case 1:

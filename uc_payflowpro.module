@@ -1208,46 +1208,6 @@ function _uc_payflowpro_recurring_profile($order, $opt = array()) {
               <TotalAmt>' . uc_currency_format($order->order_total, FALSE, FALSE, '.') . '</TotalAmt>
             </Invoice>';
 
-  //TODO: un-hard-code the address and such
-  $smlq = '
-          <RequestData>
-            <Vendor>vendor</Vendor>
-            <Partner>partner</Partner>
-            <RecurringProfiles>
-              <RecurringProfile Id="1">
-                <Add>
-                  <Tender>' .
-                    _uc_payflowpro_cc_info_xml($oder->order_id) . '
-                  </Tender>
-                  <RPData>
-                    <Name>' . check_plain($profile_name) . '</Name>
-                    <TotalAmt>' . $recurring_amt . '</TotalAmt>
-                    <Start>' . $profile_start_date . '</Start>
-                    <Term>' . $profile_term . '</Term>
-                    <PayPeriod>' . $profile_period . '</PayPeriod>
-                    <EMail>' . check_plain($order->primary_email) . '</EMail>
-                    <OptionalTrans>Sale</OptionalTrans>
-                    <OptionalTransAmt>12</OptionalTransAmt>
-                    <BillTo>
-                      <Address>
-                        <Street>123 4th street</Street>
-                        <City>San Jose</City>
-                        <State>CA</State>
-                        <Zip>95032</Zip>
-                      </Address>
-                    </BillTo>
-                  </RPData>
-                </Add>
-              </RecurringProfile>
-            </RecurringProfiles>
-          </RequestData>
-          <RequestAuth>
-            <UserPass>
-              <User>user</User>
-              <Password>password</Password>
-            </UserPass>
-          </RequestAuth>
-';
   return $xml;
 }
 
