@@ -12,6 +12,9 @@
 define('UC_PFP_OSTYPE_WINDOWS', 1);
 define('UC_PFP_OSTYPE_LINUX', 2);
 
+// Must always include files that contain hooks.
+require_once('uc_payflowpro.ca.inc');
+
 /*******************************************************************************
  * Hook Functions (Drupal)
  ******************************************************************************/
@@ -251,7 +254,6 @@ function uc_payflowpro_charge($order_id, $amount, $data) {
   }
   uc_order_comment_save($order_id, $user->uid, $message, 'admin');
 
-  uc_payflowpro_recurring_charge_process($order, $result);
   return $result;
 }
 

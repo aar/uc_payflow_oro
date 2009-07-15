@@ -7,16 +7,10 @@
  * post payment of the sale payment.
  *
  */
-function uc_payflowpro_recurring_charge_process($order, $result) {
+function uc_payflowpro_recurring_charge_process($order) {
   // So, we're going to take the order in and process the recurring
   // items by creating profiles for them, and linking the profile
   // ID to a table in UC so we can look up their profile information.
-
-  //TODO: determine if this if block from the old HEAD branch is useful and
-  //add it back in if it is.  wasn't in the version being used for D6 port.
-  /*if($result['success'] != true) {
-    return false;
-  }*/
 
   $cuser = user_load(array('uid' => $order->uid));
   $payment = $order->payment_details;
@@ -42,7 +36,7 @@ function uc_payflowpro_recurring_charge_process($order, $result) {
       $profile->setShipTo(_uc_payflowpro_format_address($order, 'shipto'));
       $profile->setEmail($cuser->mail);
 
-      // Tedner
+      // Tender
       $tender['Type'] = 'C';
       $tender['CardNum'] = $payment['cc_number'];
       $tender['NameOnCard'] = $payment['cc_owner'];
@@ -60,6 +54,7 @@ function uc_payflowpro_recurring_charge_process($order, $result) {
 
       $result = $profile->save();
       $result = $result->RecurringProfileResult;
+
       // Place the profile result into our database
       if($result->Message == 'Approved') {
         db_query("INSERT INTO {uc_payflowpro_recurring_profiles}
@@ -72,8 +67,20 @@ function uc_payflowpro_recurring_charge_process($order, $result) {
                  $cuser->uid, $result->ProfileID, $result->RPRef,
                  $result->RPRef,
                  $result->Result, $item->model);
+
+        $message = t('Recurring payment processed successfully with profile ID !pfp_profile_id.', array(
+          '!pfp_profile_id' => $result->ProfileID,
+        ));
+      } else {
+        $message = t('Recurring payment declined for !amount with error code !return_code (!message).', array(
+          '!amount' => uc_currency_format($item->price),
+          '!return_code' => $result->Result,
+          '!message' => $result->Message,
+        ));
       }
 
+      // Add an admin note to the order reflecting the result of the recurring profile save attempt.
+      uc_order_comment_save($order->order_id, $order->uid, $message, 'admin');
     }
   }
 
