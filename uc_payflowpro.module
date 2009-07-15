@@ -213,7 +213,11 @@ function uc_payflowpro_charge($order_id, $amount, $data) {
   $txn_message = $response->Message;
 
   if ((int)$txn_result_code != 0) {
-    $message = t('Credit card declined for !amount with error code !return_code.', array('!amount' => uc_currency_format($amount), '!return_code' => $txn_result_code));
+    $message = t('Credit card declined for !amount with error code !return_code (!message).', array(
+      '!amount' => uc_currency_format($amount),
+      '!return_code' => $txn_result_code,
+      '!message' => $txn_message,
+    ));
     $data = array();
     $data['pnref'] = (string)$response->PNRef;
     $data['authcode'] = (string)$response->AuthCode;
@@ -229,7 +233,10 @@ function uc_payflowpro_charge($order_id, $amount, $data) {
   else {
     $x_approval_code = $response->AuthCode;
     $pnref = $response->PNRef;
-    $message = t('Credit card payment processed successfully with approval code !code and pnref !pnref.', array('!code' => $x_approval_code, '!pnref' => $pnref));
+    $message = t('Credit card payment processed successfully with approval code !code and pnref !pnref.', array(
+      '!code' => $x_approval_code,
+      '!pnref' => $pnref,
+    ));
     $data = array();
     $data['pnref'] = (string)$response->PNRef;
     $data['authcode'] = (string)$response->AuthCode;
