@@ -581,7 +581,7 @@ class PayflowProRecurring {
               <City>' . check_plain($addy['City']) . '</City>
               <State>' .  check_plain($addy['State']) . '</State>
               <Zip>' . check_plain($addy['Zip']) . '</Zip>
-              <Country>' . check_plain($addy['Country']) . '</Zip>
+              <Country>' . check_plain($addy['Country']) . '</Country>
             </Address>
           </' . $type . '>';
     return $xml;
