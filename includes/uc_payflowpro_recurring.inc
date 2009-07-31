@@ -192,12 +192,12 @@ function _uc_display_period_map() {
   }
   $uc_display_period_map = array(
     'W' => 'Weekly',
-    'B' => 'Every two weeks',
-    'SM' => 'Twice a month',
-    '4W' => 'Every four weeks',
+    'B' => 'Every Two Weeks',
+    'SM' => 'Twice a Month',
+    '4W' => 'Every Four Weeks',
     'M' => 'Monthly',
     'Q' => 'Quaterly',
-    'SA' => 'Twice a year',
+    'SA' => 'Twice a Year',
     'Y' => 'Yearly',
   );
 
