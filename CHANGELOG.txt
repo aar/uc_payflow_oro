@@ -2,6 +2,7 @@
 
 UC Payflow Pro 6.x-1.1-beta2, 2009-07-15
 ------------------------------
+#536914 by kwinters: Improve loading of include files
 #519382 by kwinters: Automatic New Account Recurring Profile Access
 #519452 by jrguitar21, kwinters: Watchdog Message Improvements
 

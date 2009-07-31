@@ -12,19 +12,15 @@
 define('UC_PFP_OSTYPE_WINDOWS', 1);
 define('UC_PFP_OSTYPE_LINUX', 2);
 
-// Must always include files that contain hooks.
+// Must always include files that contain hooks.  TODO: Utilize dynamic loading.
 require_once('uc_payflowpro.ca.inc');
+require_once('includes/payflowpro_utils.inc');
+require_once('includes/PayflowProRecurring.class.php');
+require_once('includes/uc_payflowpro_recurring.inc');
 
 /*******************************************************************************
  * Hook Functions (Drupal)
  ******************************************************************************/
-
-/**
- * Implementation of hook_init()
- */
-function uc_payflowpro_init() {
-  _uc_payflowpro_include_init();
-}
 
 /**
  * Implementation of hook_menu()
@@ -1227,9 +1223,6 @@ function _uc_payflowpro_recurring_profile($order, $opt = array()) {
  * Implementation of hook_cron
  */
 function uc_payflowpro_cron() {
-  // Init and include classes
-  _uc_payflowpro_include_init();
-
   // Update the items that where we need to find out their payment date.
   _uc_payflowpro_recurring_sync_status();
   // Now we need to process the items
@@ -1345,72 +1338,6 @@ function _uc_payflowpro_check_requirements() {
   }
 
   return $success;
-}
-
-/**
- * @abstract Initializes the files needed to work
- *
- * @return void
- */
-function _uc_payflowpro_include_init() {
-  static $loaded;
-  if($loaded === true) {
-    return;
-  }
-
-  // Look in the includes folder for files
-  // that we MUST include. These will have
-  // the extension .inc.
-  $dir_path = drupal_get_path('module', 'uc_payflowpro') . '/includes';
-  _uc_payflowpro_include_files($dir_path);
-
-  $loaded = true;
-  return;
-}
-
-function _uc_payflowpro_include_files($dir, $absolute = false) {
-  $osinfo = _uc_payflowpro_detect_os();
-  $sep = $osinfo['path_sep'];
-
-  // Handles .svn and other misc files that we don't want to load
-  if(strpos(basename($dir),'.') === 0) {
-    return;
-  }
-
-  if(!$absolute) {
-    $cwd = getcwd();
-    $dir_path = $cwd . '/' . $dir;
-    $dir_path = str_replace('/', $sep, $dir_path);
-  }
-  else {
-    $dir_path = str_replace('/', $sep, $dir);
-  }
-
-  $files = @scandir($dir_path);
-  if(!$files) {
-    return;
-  }
-  $ext = array('module', 'inc', 'php', 'class');
-  foreach($files as $k => $filename) {
-
-    $current_path = ($absolute) ? "$dir_path/$filename" : "$cwd/$dir/$filename";
-    $current_path = str_replace('/', $sep, $current_path);
-    $path_parts = pathinfo("$current_path");
-
-    $extension = $path_parts['extension'];
-    if($filename != '.' && $filename != '..' ) {
-      if( !is_dir($current_path) ) {
-        if( in_array($extension, $ext) ) {
-          include_once($current_path);
-        }
-      }
-      else {
-        _uc_payflowpro_include_files($current_path, true);
-      }
-    }
-
-  }
-  return;
 }
 
 function _uc_payflowpro_detect_os() {
