@@ -161,14 +161,14 @@ function _uc_pfp_period_map() {
     return $uc_pfp_period_map;
   }
   $uc_pfp_period_map = array(
-    'W'  => 'Weekly',
-    'B'  => 'Bi-weekly',
-    'SM' => 'Semi-monthly',
-    '4W' => 'Every four weeks',
-    'M'  => 'Monthly',
-    'Q'  => 'Quarterly',
-    'SA' => 'Semi-yearly',
-    'Y'  => 'Yearly',
+    'W'  => 'WEEK',
+    'B'  => 'BIWK',
+    'SM' => 'SMMO',
+    '4W' => 'FRWK',
+    'M'  => 'MONT',
+    'Q'  => 'QTER',
+    'SA' => 'SMYR',
+    'Y'  => 'YEAR',
   );
 
   return $uc_pfp_period_map;
@@ -192,12 +192,12 @@ function _uc_display_period_map() {
   }
   $uc_display_period_map = array(
     'W' => 'Weekly',
-    'B' => 'Every Two Weeks',
-    'SM' => 'Twice a Month',
-    '4W' => 'Every Four Weeks',
+    'B' => 'Bi-weekly',
+    'SM' => 'Semi-monthly',
+    '4W' => 'Every four weeks',
     'M' => 'Monthly',
     'Q' => 'Quaterly',
-    'SA' => 'Twice a Year',
+    'SA' => 'Semi-yearly',
     'Y' => 'Yearly',
   );
 
