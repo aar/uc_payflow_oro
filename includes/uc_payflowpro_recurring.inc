@@ -161,14 +161,14 @@ function _uc_pfp_period_map() {
     return $uc_pfp_period_map;
   }
   $uc_pfp_period_map = array(
-    'W'  => 'WEEK',
-    'B'  => 'BIWK',
-    'SM' => 'SMMO',
-    '4W' => 'FRWK',
-    'M'  => 'MONT',
-    'Q'  => 'QTER',
-    'SA' => 'SMYR',
-    'Y'  => 'YEAR',
+    'W'  => 'Weekly',
+    'B'  => 'Bi-weekly',
+    'SM' => 'Semi-monthly',
+    '4W' => 'Every four weeks',
+    'M'  => 'Monthly',
+    'Q'  => 'Quarterly',
+    'SA' => 'Semi-yearly',
+    'Y'  => 'Yearly',
   );
 
   return $uc_pfp_period_map;
@@ -192,12 +192,12 @@ function _uc_display_period_map() {
   }
   $uc_display_period_map = array(
     'W' => 'Weekly',
-    'B' => 'Bi-weekly',
-    'SM' => 'Semi-monthly',
+    'B' => 'Every two weeks',
+    'SM' => 'Twice a month',
     '4W' => 'Every four weeks',
     'M' => 'Monthly',
     'Q' => 'Quaterly',
-    'SA' => 'Semi-yearly',
+    'SA' => 'Twice a year',
     'Y' => 'Yearly',
   );
 
@@ -339,9 +339,18 @@ function uc_payflowpro_recurring_checkout_pane_cart($op, &$arg1, $arg2) {
 
 function uc_payflowpro_recurring_get_renewable_cart_products_rs() {
   $items = uc_cart_get_contents();
+
+  if (empty($items)) {
+    return FALSE;
+  }
+
   $vids = array();
   foreach($items as $k => $item) {
     $vids[] =  $item->vid;
+  }
+
+  if (empty($vids)) {
+    return FALSE;
   }
 
   return db_query("SELECT n.title, model, terms, period, urp.vid FROM {uc_payflowpro_recurring_products} urp INNER JOIN {uc_products} p ON urp.vid = p.vid
