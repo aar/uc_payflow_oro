@@ -161,14 +161,14 @@ function _uc_pfp_period_map() {
     return $uc_pfp_period_map;
   }
   $uc_pfp_period_map = array(
-    'W'  => 'WEEK',
-    'B'  => 'BIWK',
-    'SM' => 'SMMO',
-    '4W' => 'FRWK',
-    'M'  => 'MONT',
-    'Q'  => 'QTER',
-    'SA' => 'SMYR',
-    'Y'  => 'YEAR',
+    'W'  => 'Weekly',
+    'B'  => 'Bi-weekly',
+    'SM' => 'Semi-monthly',
+    '4W' => 'Every four weeks',
+    'M'  => 'Monthly',
+    'Q'  => 'Quarterly',
+    'SA' => 'Semi-yearly',
+    'Y'  => 'Yearly',
   );
 
   return $uc_pfp_period_map;
@@ -192,12 +192,12 @@ function _uc_display_period_map() {
   }
   $uc_display_period_map = array(
     'W' => 'Weekly',
-    'B' => 'Bi-weekly',
-    'SM' => 'Semi-monthly',
-    '4W' => 'Every four weeks',
+    'B' => 'Every Two Weeks',
+    'SM' => 'Twice a Month',
+    '4W' => 'Every Four Weeks',
     'M' => 'Monthly',
     'Q' => 'Quaterly',
-    'SA' => 'Semi-yearly',
+    'SA' => 'Twice a Year',
     'Y' => 'Yearly',
   );
 
@@ -838,7 +838,7 @@ function uc_payflowpro_cpanel_view_profile($pid) {
   }
   $check = db_result(db_query("SELECT count(*) FROM {uc_payflowpro_recurring_profiles} WHERE pfp_uid = '%d' $pidWhereClause", $user->uid, $pid));
   if($check < 1 && !user_access('administer store')) {
-  	return drupal_access_denied();
+    return drupal_access_denied();
   }
 
   if(arg(0) == 'admin') {
