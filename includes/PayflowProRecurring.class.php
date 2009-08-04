@@ -309,7 +309,7 @@ class PayflowProRecurring {
               <TotalAmt>' . check_plain($this->getAmt()) . '</TotalAmt>
               <Start>' . check_plain($this->getStartDate()) . '</Start>
               <Term>' . check_plain($this->getTerm()) . '</Term>
-              <PayPeriod>' . check_plain($this->getPayPeriod()) . '</PayPeriod>
+              <PayPeriod>' . number_format($this->getPayPeriod(), 2, '.', '') . '</PayPeriod>
               <EMail>' . check_plain($this->getEmail()) . '</EMail>
               <CompanyName>' . check_plain($this->getCompanyName()) . '</CompanyName>
               ' . $optionstrans .
