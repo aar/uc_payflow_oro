@@ -306,10 +306,10 @@ class PayflowProRecurring {
     $xml = '
             <RPData>
               <Name>' . check_plain($this->getName()) . '</Name>
-              <TotalAmt>' . check_plain($this->getAmt()) . '</TotalAmt>
+              <TotalAmt>' . number_format($this->getAmt(), 2, '.', '') . '</TotalAmt>
               <Start>' . check_plain($this->getStartDate()) . '</Start>
               <Term>' . check_plain($this->getTerm()) . '</Term>
-              <PayPeriod>' . number_format($this->getPayPeriod(), 2, '.', '') . '</PayPeriod>
+              <PayPeriod>' . check_plain($this->getPayPeriod()) . '</PayPeriod>
               <EMail>' . check_plain($this->getEmail()) . '</EMail>
               <CompanyName>' . check_plain($this->getCompanyName()) . '</CompanyName>
               ' . $optionstrans .
