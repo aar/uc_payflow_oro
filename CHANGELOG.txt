@@ -1,5 +1,9 @@
 // $Id$
 
+UC Payflow Pro 6.x-1.1-beta4, XXXX-XX-XX
+------------------------------
+#524538 by kwinters: Correct string length for X-VPS-Request-ID
+
 UC Payflow Pro 6.x-1.1-beta3, 2009-08-06
 ------------------------------
 #512618 by kwinters: Fixed Payment Period PFP Codes (other fixes)

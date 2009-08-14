@@ -12,7 +12,7 @@
 define('UC_PFP_OSTYPE_WINDOWS', 1);
 define('UC_PFP_OSTYPE_LINUX', 2);
 
-// Must always include files that contain hooks.  TODO: Utilize dynamic loading.
+// Must always include files that contain hooks.  TODO: Utilize dynamic loading and module_load_include
 require_once('uc_payflowpro.ca.inc');
 require_once('includes/payflowpro_utils.inc');
 require_once('includes/PayflowProRecurring.class.php');
@@ -847,7 +847,7 @@ function _uc_payflowpro_submit_xml($xml, $mode = NULL) {
     $url = $servers[$mode];
   }
 
-  $request_id = sha1($xml_request . time());
+  $request_id = md5($xml_request . time());
   $user_agent = 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)';
 
   $headers[] = "Content-Type: text/xml"; // either text/namevalue or text/xml
@@ -859,7 +859,7 @@ function _uc_payflowpro_submit_xml($xml, $mode = NULL) {
   $headers[] = "X-VPS-VIT-Client-Architecture: x86";  // For your info
   $headers[] = "X-VPS-VIT-Client-Certification-Id: 33baf5893fc2123d8b191d2d011b7fdc"; // This header requirement will be removed
   $headers[] = "X-VPS-VIT-Integration-Product: Ubercart";  // For your info, would populate with application name
-  $headers[] = "X-VPS-VIT-Integration-Version: 1.0"; // Application version
+  $headers[] = "X-VPS-VIT-Integration-Version: 2.0"; // Application version
   $headers[] = "X-VPS-Request-ID: " . $request_id;
 
   $ch = curl_init();
