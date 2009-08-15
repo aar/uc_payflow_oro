@@ -1,8 +1,9 @@
 // $Id$
 
-UC Payflow Pro 6.x-1.1-beta4, XXXX-XX-XX
+UC Payflow Pro 6.x-1.1-beta4, 2009-08-15
 ------------------------------
-#524538 by kwinters: Correct string length for X-VPS-Request-ID
+#549938 by mwillis: Transaction Unique ID uses variable that has been renamed
+#524538 by mwillis, kwinters: Correct string length for X-VPS-Request-ID
 
 UC Payflow Pro 6.x-1.1-beta3, 2009-08-06
 ------------------------------
