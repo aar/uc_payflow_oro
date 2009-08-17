@@ -1,5 +1,9 @@
 // $Id$
 
+UC Payflow Pro 6.x-1.1-beta5, XXXX-XX-XX
+------------------------------
+#550762 by cjdavis, kwinters: Only show recurring user tab if recurring is enabled
+
 UC Payflow Pro 6.x-1.1-beta4, 2009-08-15
 ------------------------------
 #549938 by mwillis: Transaction Unique ID uses variable that has been renamed
