@@ -987,11 +987,8 @@ function _uc_payflowpro_invoice_xml($order) {
 
   $tax = 0;
   if (module_exists('uc_taxes')) {
-    $taxes = uc_taxes_calculate($order);
-    if (is_array($taxes)) {
-      foreach ($taxes as $tax_item) {
-        $tax += $tax_item['amount'];
-      }
+    foreach (uc_taxes_calculate($order) as $tax_item) {
+      $tax += $tax_item->amount;
     }
   }
 
@@ -1174,11 +1171,8 @@ function _uc_payflowpro_recurring_profile($order, $opt = array()) {
 
   $tax = 0;
   if (module_exists('uc_taxes')) {
-    $taxes = uc_taxes_calculate($order);
-    if (is_array($taxes)) {
-      foreach ($taxes as $tax_item) {
-        $tax += $tax_item['amount'];
-      }
+    foreach (uc_taxes_calculate($order) as $tax_item) {
+      $tax += $tax_item->amount;
     }
   }
 

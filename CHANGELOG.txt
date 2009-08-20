@@ -1,7 +1,8 @@
 // $Id$
 
-UC Payflow Pro 6.x-1.1-beta5, XXXX-XX-XX
+UC Payflow Pro 6.x-1.1-beta5, 2009-08-20
 ------------------------------
+#553864 by kwinters: Fixed orders with taxes fatal error
 #550762 by cjdavis, kwinters: Only show recurring user tab if recurring is enabled
 
 UC Payflow Pro 6.x-1.1-beta4, 2009-08-15
