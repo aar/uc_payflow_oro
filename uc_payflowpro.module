@@ -907,7 +907,12 @@ function _uc_payflowpro_submit_xml($xml, $mode = NULL) {
   }
   else {
     $xml_response = @simplexml_load_string($curl_response);
-    if(isset($xml_response->ResponseData->RecurringProfileResults)) {
+    if ($xml_response === FALSE) {
+      // Response wasn't valid XML, some errors come back as strings.
+      watchdog('uc_payflowpro', 'PayFlow server returned a non-XML error: %error', array('%error' => $curl_response), WATCHDOG_ERROR);
+      $response = FALSE;
+    }
+    elseif(isset($xml_response->ResponseData->RecurringProfileResults)) {
       $response = $xml_response->ResponseData->RecurringProfileResults;
     }
     else {
@@ -1372,14 +1377,14 @@ function uc_payflowpro_debug() {
   $page = '';
 
   // Process
-  if($form_state['values']['op'] == t('Send')) {
+  if($form_values['op'] == t('Send')) {
     drupal_set_message(t('Transaction sent...'));
     $response = _uc_payflowpro_submit_xml($form_values['xml_code'], $form_values['mode']);
+    $page .= '<h3>Result: (also check for log entries)</h3><pre>' . var_export($response, TRUE) . '</pre><hr/>';
   }
 
   $page .= drupal_get_form('uc_payflowpro_debug_form', $form_values);
 
-  $page .= '<pre>' . print_r($response,1) . '</pre>';
   return $page;
 }
 
