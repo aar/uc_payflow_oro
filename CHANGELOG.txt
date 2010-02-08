@@ -1,8 +1,9 @@
 // $Id$
 
-UC Payflow Pro 6.x-1.1-beta6, XXXX-XX-XX
+UC Payflow Pro 6.x-1.1, 2010-02-08
 ------------------------------
 #634806 by Kuldip Gohil, kwinters: Debug Tool Update for D6
+#706026 by arski: Warning message on variable_get call in Express Checkout
 
 UC Payflow Pro 6.x-1.1-beta5, 2009-08-20
 ------------------------------

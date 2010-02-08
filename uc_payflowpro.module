@@ -1102,7 +1102,7 @@ function _uc_payflowpro_set_ec_xml($order) {
                   <EMail>' . check_plain($order->primary_email) . '</EMail>
                   <ReturnURL>' . url('cart/echeckout/selected', array('absolute' => TRUE)) . '</ReturnURL>
                   <CancelURL>' . url('uc_payflowpro/ec/cancel', array('absolute' => TRUE)) . '</CancelURL>
-                  <ReqConfirmShipping>' . check_plain(variable_get('uc_payflowpro_ec_reqconfirmed_addr')) . '</ReqConfirmShipping>
+                  <ReqConfirmShipping>' . check_plain(variable_get('uc_payflowpro_ec_reqconfirmed_addr', '')) . '</ReqConfirmShipping>
                 </PayPal>
               </Tender>
             </PayData>
