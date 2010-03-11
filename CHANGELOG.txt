@@ -1,5 +1,9 @@
 // $Id$
 
+UC Payflow Pro 6.x-1.2, XXXX-XX-XX
+------------------------------
+#554910 by retorque, kwinters: Cert path instructions for Windows (abs path)
+
 UC Payflow Pro 6.x-1.1, 2010-02-08
 ------------------------------
 #634806 by Kuldip Gohil, kwinters: Debug Tool Update for D6

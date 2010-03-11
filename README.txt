@@ -13,6 +13,7 @@ make the process easier.
 The location of the cacert file that comes with this module will work, but putting the file outside 
 of a web-accessible place is recommended.  Our current recommendation is a path like 
 /etc/ssl/certs/cacert.pem (which needs to be readable by the apache user, but writable only by root = 644).
+This path may have to be absolute in some configurations.
 
 Recurring billing functionality has not yet been tested in D6, so use at your own risk!
 
@@ -29,13 +30,14 @@ have a ca installed, simply specify the cacert.pem file (from the authority, or 
 install). If you are on a webserver where you cannot gain access (or cant find it) to cacert.pem, you may use the
 bundled cacert.pem file. It is reccomended that cacert.pem be placed OUTSIDE of the drupal, or
 any directories accessible from the web. Once the cacert.pem file is placed somewhere on your machine,
-in the Paypal PayFlow Pro settings, under "Certificate Path", specifcify the relative directory
+in the Paypal PayFlow Pro settings, under "Certificate Path", specify the absolute or relative directory
 of that cacert.pem file.
 
 i.e. Certificate path can be:
 
 ../cacert.pem (one directory above drupal root dir)
 ../../cacert.pem (two directories above drupal root dir)
+[Note: some configurations will require an absolute path.]
 
 etc.
 
