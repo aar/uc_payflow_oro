@@ -1010,7 +1010,7 @@ function _payment_payflowpro_auth_info() {
   return $auth;
 }
 
-function uc_payflowpro_cancel_form($profile_id, $cancel_path) {
+function uc_payflowpro_cancel_form($form_state, $profile_id, $cancel_path) {
   $form = array();
   $form['profile_id'] = array('#type' => 'hidden', '#value' => $profile_id);
   $order_id = db_result(db_query("SELECT order_id FROM {uc_payflowpro_recurring_profiles} WHERE pfp_profile_id = '%s'", $profile_id));
