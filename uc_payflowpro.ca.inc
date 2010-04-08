@@ -25,14 +25,14 @@ function uc_payflowpro_ca_predicate() {
   // Setup a default predicate for customer checkout notifications.
   $predicates['uc_checkout_complete_payflowpro'] = array(
     '#title' => t('Order Complete Recurring Profiles'),
-    '#description' => t('Create recurring profiles when the checkout is complete.'),
+    '#description' => t('Payflow Pro recurring order post-completion processing.'),
     '#class' => 'payment',
     '#status' => 1,
     '#trigger' => 'uc_checkout_complete',
     '#actions' => array(
       array(
         '#name' => 'uc_payflowpro_process_recurring',
-        '#title' => t('Create recurring profiles for the order.'),
+        '#title' => t('Assign automatically created users to the correct recurring profiles.'),
         '#argument_map' => array(
           'order' => 'order',
         ),
@@ -53,9 +53,9 @@ function uc_payflowpro_ca_action() {
   );
 
   $actions['uc_payflowpro_process_recurring'] = array(
-    '#title' => t('Create recurring profiles for the order.'),
+    '#title' => t('Assign automatically created users to the correct recurring profiles.'),
     '#category' => t('Payment'),
-    '#callback' => 'uc_payflowpro_recurring_charge_process',
+    '#callback' => 'uc_payflowpro_checkout_complete_processing',
     '#arguments' => array(
       'order' => $order_arg,
     ),

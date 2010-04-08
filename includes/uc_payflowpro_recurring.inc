@@ -8,11 +8,15 @@
  *
  */
 function uc_payflowpro_recurring_charge_process($order) {
-  // So, we're going to take the order in and process the recurring
-  // items by creating profiles for them, and linking the profile
-  // ID to a table in UC so we can look up their profile information.
+  // Take the order in and process the recurring items by creating profiles for
+  // them, and linking the profile ID to a table in UC so we can look up their
+  // profile information later.
 
   $cuser = user_load(array('uid' => $order->uid));
+  // User name is empty for anon checkout, so make one up the same way as uc_cart_complete_sale.
+  if ($cuser->uid < 1) {
+    $cuser->name = uc_store_email_to_username($order->primary_email);
+  }
   $payment = $order->payment_details;
   $site_key = variable_get('uc_payflowpro_recurring_site_key', 'drupal_uc');
   foreach($order->products as $k => $item) {
@@ -34,7 +38,7 @@ function uc_payflowpro_recurring_charge_process($order) {
       $profile->setCompanyName( (($order->billing_company) ? $order->billing_company : $order->delivery_company));
       $profile->setBillTo(_uc_payflowpro_format_address($order, 'billto'));
       $profile->setShipTo(_uc_payflowpro_format_address($order, 'shipto'));
-      $profile->setEmail($cuser->mail);
+      $profile->setEmail($order->primary_email);
 
       // Tender
       $tender['Type'] = 'C';
@@ -84,6 +88,20 @@ function uc_payflowpro_recurring_charge_process($order) {
     }
   }
 
+}
+
+function uc_payflowpro_checkout_complete_processing($order) {
+  // Anonymous users automatically have a user created for them on checkout
+  // complete. However, that happens after the CC info has already been
+  // truncated, so it's now too late to create the profile.  Since the only
+  // thing the uid is needed for is some user panel lookups, etc. we can make
+  // the profile earlier and then just fix the uid after the user has been created.
+  if ($order->uid > 0 && $order->order_id > 0) {
+    db_query(
+    	"UPDATE {uc_payflowpro_recurring_profiles} SET pfp_uid = %d WHERE order_id = %d",
+      $order->uid, $order->order_id
+   );
+  }
 }
 
 // Helpers to be moved

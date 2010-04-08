@@ -249,6 +249,11 @@ function uc_payflowpro_charge($order_id, $amount, $data) {
       'uid' => $user->uid,
       'data' => $data,
     );
+
+    if(variable_get('uc_payflowpro_enable_recurring', FALSE)) {
+      // The recurring fee needs to be created before ubercart truncates the CC info down to the last 4 digits.
+      uc_payflowpro_recurring_charge_process($order);
+    }
   }
   uc_order_comment_save($order_id, $user->uid, $message, 'admin');
 
