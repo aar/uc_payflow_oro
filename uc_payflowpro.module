@@ -1298,6 +1298,13 @@ function uc_payflowpro_cron() {
           '@next_payment_date' => $profile->getNextPaymentDate('M.d.Y'),
           '@status' => $profile->getLastPaymentStatus(),
         ));
+
+        // For now, integration with uc_roles is direct.  After integration
+        // with uc_recurring is done, this should no longer be needed because
+        // uc_recurring will already take care of it. @see #525222
+        if (is_callable('uc_roles_action_order_renew')) {
+          uc_roles_action_order_renew($order, array());
+        }
       }
     }
     else {

@@ -7,6 +7,7 @@ UC Payflow Pro 6.x-1.2, XXXX-XX-XX
 #631232 by beifler, kwinters: Customers cannot cancel their own recurring fees
 #770000 by kwinters, beifler: Frequent Cron Runs Create Duplicate Recurring Payments
 #769990 by kwinters, beifler: Recurring Option to Update Orders not Duplicate
+#770008 by kwinters, beifler: Better UC Roles Integration
 
 UC Payflow Pro 6.x-1.1, 2010-02-08
 ------------------------------
