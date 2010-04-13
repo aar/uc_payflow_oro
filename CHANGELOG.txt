@@ -5,6 +5,7 @@ UC Payflow Pro 6.x-1.2, XXXX-XX-XX
 #554910 by retorque, kwinters: Cert path instructions for Windows (abs path)
 #764874 by kwinters, beifler: Credit Card # is not passed correctly for Recurring Billing profiles 
 #631232 by beifler, kwinters: Customers cannot cancel their own recurring fees
+#770000 by kwinters, beifler: Frequent Cron Runs Create Duplicate Recurring Payments
 
 UC Payflow Pro 6.x-1.1, 2010-02-08
 ------------------------------

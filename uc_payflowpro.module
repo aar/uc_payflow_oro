@@ -1229,32 +1229,55 @@ function _uc_payflowpro_recurring_profile($order, $opt = array()) {
  * Implementation of hook_cron
  */
 function uc_payflowpro_cron() {
-  // Update the items that where we need to find out their payment date.
-  _uc_payflowpro_recurring_sync_status();
-  // Now we need to process the items
-  _uc_payflowpro_recurring_process_recurring();
-
-  return;
-}
-
-/**
- * Syncs the Recurring Profiles information with PFP. This does not
- * do any processing of the profiles.
- */
-function _uc_payflowpro_recurring_sync_status() {
-
+  // Sync every profile once per day.
+  // If the profile is canceled via manager.paypal.com it needs to be updated here.
   $rs = db_query("SELECT * FROM {uc_payflowpro_recurring_profiles} WHERE
-                 (next_payment_date IS NULL || next_payment_date = 0 || last_status_check = 0)
-                 AND (pfp_status = 'ACTIVE' || pfp_status = 0 || pfp_status IS NULL)");
+                 last_status_check = 0 || last_status_check < %d", time() - 86400);
   while($row = db_fetch_object($rs)) {
     $profile = new PayflowProRecurring($row->pfp_profile_id, _uc_payflowpro_get_auth());
     $profile->refresh();
 
+
     if($profile->getStatus() == 'ACTIVE') {
+      // If a payment occurred, the pnref needs to be updated in the database.
+      $payment = $profile->getLastPayment();
+      $newPNRef = $row->pfp_rpref;
+      if (!empty($payment['PNRef'])) {
+        $newPNRef = $payment['PNRef'];
+      }
       $try = db_query("UPDATE {uc_payflowpro_recurring_profiles}
-               SET profile_status = '%s', next_payment_date = %d, last_status_check = %d
+               SET profile_status = '%s', next_payment_date = %d, last_status_check = %d, payment_status = '%s', pfp_rpref = '%s'
                WHERE pfp_pid = %d",
-               $profile->getStatus(), $profile->getNextPaymentDate('unix'), time(), $row->pfp_pid);
+               $profile->getStatus(), $profile->getNextPaymentDate('unix'), time(), $profile->getLastPaymentStatus(), $newPNRef, $row->pfp_pid);
+
+      // If a payment was made and it was successful, need to do some order processing.
+      if($profile->getLastPaymentStatus() === 0 && $newPNRef != $row->pfp_rpref) {
+        $try = db_query("UPDATE {uc_payflowpro_recurring_profiles}
+               SET profile_status = '%s', next_payment_date = %d, last_status_check = %d, payment_status = '%s'
+               WHERE pfp_pid = %d",
+               $profile->getStatus(), $profile->getNextPaymentDate('unix'), time(), $profile->getLastPaymentStatus(), $row->pfp_pid);
+
+
+
+        $new_order = uc_order_load($row->order_id);
+        $new_order->order_id = null; // For saftey
+        $shell_order = uc_order_new($row->uid);
+        // Set the original order id to the new one
+        $new_order->order_id = $shell_order->order_id;
+        // Seve the order
+        uc_order_save($new_order);
+
+        // Add a payment to the order
+        $comment = "Logging payment from Payflow Pro for profile " . $profile->getProfileID();
+        $data = array();
+        $last_payment = $profile->getLastPayment();
+        unset($last_payment['Amt']);
+        $data = $last_payment;
+        $data['pnref'] = $last_payment['PNREF'];
+        $data['payment_num'] = $last_payment['PaymentNum'];
+        uc_payment_enter($new_order->order_id, 'payflowpro', $data['Amount'], 0, NULL, $comment);
+
+      }
     }
     else {
       $try = db_query("UPDATE {uc_payflowpro_recurring_profiles}
@@ -1274,51 +1297,9 @@ function _uc_payflowpro_recurring_sync_status() {
                                           '%status' => $profile->getLastPaymentStatus())
                );
     }
-  }
-  return;
-}
 
-/**
- * This looks through the recurring table, and processes
- * the recurring items that need to be processed.
- */
-function _uc_payflowpro_recurring_process_recurring() {
-  // First lets grab the ones we need to process
 
-  $rs = db_query("SELECT * FROM {uc_payflowpro_recurring_profiles}
-                 WHERE profile_status = 'ACTIVE' AND
-                 next_payment_date != 0 AND next_payment_date IS NOT NULL AND
-                 next_payment_date + 86400 < %d", time());
-  while($row = db_fetch_object($rs)) {
-    // Load up the profile
-    $profile = new PayflowProRecurring($row->pfp_profile_id, _uc_payflowpro_get_auth());
-    $profile->refresh();
-
-    // Check the payment status
-    if($profile->getLastPaymentStatus() === 0) {
-      $new_order = uc_order_load($row->order_id);
-      $new_order->order_id = null; // For saftey
-      $shell_order = uc_order_new($row->uid);
-      // Set the original order id to the new one
-      $new_order->order_id = $shell_order->order_id;
-      // Seve the order
-      uc_order_save($new_order);
-
-      // Add a payment to the order
-      $comment = "Logging payment from Payflow Pro for profile " . $profile->getProfileID();
-      $data = array();
-      $last_payment = $profile->getLastPayment();
-      unset($last_payment['Amt']);
-      $data = $last_payment;
-      $data['pnref'] = $last_payment['PNREF'];
-      $data['payment_num'] = $last_payment['PaymentNum'];
-      uc_payment_enter($new_order->order_id, 'payflowpro', $data['Amount'], 0, NULL, $comment);
-    }
-
-    // Always update the next payment date
-    //die("Stopping processing");
-  }
-  return;
+   }
 }
 
 /*******************************************************************************
