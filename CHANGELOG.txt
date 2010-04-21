@@ -1,6 +1,6 @@
 // $Id$
 
-UC Payflow Pro 6.x-1.2, XXXX-XX-XX
+UC Payflow Pro 6.x-1.2, 2010-04-21
 ------------------------------
 #554910 by retorque, kwinters: Cert path instructions for Windows (abs path)
 #764874 by kwinters, beifler: Credit Card # is not passed correctly for Recurring Billing profiles 
