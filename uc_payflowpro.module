@@ -1238,7 +1238,7 @@ function uc_payflowpro_cron() {
   // Sync every profile once per day.
   // If the profile is canceled via manager.paypal.com it needs to be updated here.
   $rs = db_query("SELECT * FROM {uc_payflowpro_recurring_profiles} WHERE
-                 isnull(last_status_check) || last_status_check < %d", time() - 86400);
+                 last_status_check IS NULL OR last_status_check < %d", time() - 86400);
   while($row = db_fetch_object($rs)) {
     $profile = new PayflowProRecurring($row->pfp_profile_id, _uc_payflowpro_get_auth());
     $profile->refresh();

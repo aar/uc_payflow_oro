@@ -1,5 +1,9 @@
 // $Id$
 
+UC Payflow Pro 6.x-1.3, XXXX-XX-XX
+------------------------------
+#810700 by aaron1234nz: Postgres compatibility
+
 UC Payflow Pro 6.x-1.2, 2010-04-21
 ------------------------------
 #554910 by retorque, kwinters: Cert path instructions for Windows (abs path)
