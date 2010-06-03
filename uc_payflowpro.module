@@ -291,6 +291,7 @@ function uc_payflowpro_settings_form() {
   $form['payflowpro_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('PayFlow Pro settings'),
+    '#element_validate' => array('uc_payflow_pro_pfp_gateway_validate'),
   );
 
   $form['payflowpro_settings']['uc_payflowpro_mode'] = array(
@@ -352,12 +353,12 @@ function uc_payflowpro_settings_form() {
     '#title' => t('API Credentials'),
     '#description' => t('PayFlow Pro account information (test this at manager.paypal.com)'),
     '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
+    '#collapsed' => FALSE, // TODO: Change this to TRUE once the core password field clearing bug is fixed.
   );
   $form['payflowpro_settings']['api']['uc_payflowpro_partner'] = array(
     '#type' => 'textfield',
     '#title' => t('Partner'),
-    '#default_value' => variable_get('uc_payflowpro_partner', 'Verisign'),
+    '#default_value' => variable_get('uc_payflowpro_partner', 'PayPal'),
     '#description' => t('The ID provided to you by the authorized PayPal Reseller who registered you for the Payflow Pro service.  If you purchased your account directly from PayPal, use PayPal.  Otherwise, it is typically Verisign.  This is case sensitive.'),
   );
   // PayFlow XMLPay Guide refers to this as vendor instead of merchant
@@ -371,7 +372,7 @@ function uc_payflowpro_settings_form() {
     '#type' => 'textfield',
     '#title' => t('User'),
     '#default_value' => variable_get('uc_payflowpro_user', ''),
-    '#description' => t('The user name for the PayFlow service (may be the same as the vendor name).'),
+    '#description' => t('The user name for the PayFlow service (this is often the same as the Vendor name).'),
   );
   $form['payflowpro_settings']['api']['uc_payflowpro_password'] = array(
     '#type' => 'password',
@@ -415,6 +416,28 @@ function uc_payflowpro_settings_form() {
   );
 
   return $form;
+}
+
+function uc_payflow_pro_pfp_gateway_validate($element, &$form_state) {
+  if (! $form_state['values']['uc_pg_payflowpro_enabled']) {
+    return; // Gateway not enabled, config options irrelevant.
+  }
+
+  if (!is_readable($form_state['values']['uc_payflowpro_cert_path'])) {
+    form_set_error('uc_payflow_pro_pfp_account_validate_path', t('Certificate path invalid. Please be sure the path is correct and the file is readable.'));
+  }
+
+  // API Creds section.  Slightly different messages depending on what is missing to provide better feedback.
+  if (empty($form_state['values']['uc_payflowpro_partner']) || empty($form_state['values']['uc_payflowpro_vendor'])) {
+    form_set_error('uc_payflow_pro_pfp_account_validate_req', t('Payflow Pro Partner and Vendor are required fields.'));
+  }
+  if (empty($form_state['values']['uc_payflowpro_user'])) {
+    // The web service requires this field, but manager.paypal.com does not.  Make the difference fairly transparent to the end user.
+    $form_state['values']['uc_payflowpro_user'] = $form_state['values']['uc_payflowpro_vendor'];
+  }
+  if (empty($form_state['values']['uc_payflowpro_password'])) {
+    form_set_error('uc_payflow_pro_pfp_account_validate_pass', t('Payflow Pro password is required.'));
+  }
 }
 
 /*******************************************************************************

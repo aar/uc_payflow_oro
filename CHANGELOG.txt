@@ -3,6 +3,7 @@
 UC Payflow Pro 6.x-1.3, XXXX-XX-XX
 ------------------------------
 #810700 by aaron1234nz: Postgres compatibility
+#809854 by kwinters, mcabalaji: Gateway Settings Form Usability Issues
 
 UC Payflow Pro 6.x-1.2, 2010-04-21
 ------------------------------
