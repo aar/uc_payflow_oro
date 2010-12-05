@@ -3,6 +3,7 @@
 UC Payflow Pro 6.x-1.4, XXXX-XX-XX
 ------------------------------
 #796962 by kwinters: Backport of customer credit card number update
+#907922 by chillin411: Adding Link to Enable Recurring Payments error
 
 UC Payflow Pro 6.x-1.3, 2010-06-03
 ------------------------------

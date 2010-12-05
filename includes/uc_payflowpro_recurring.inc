@@ -748,7 +748,7 @@ function uc_payflowpro_recurring_products_delete_form_submit($form, &$form_state
  */
 function _uc_payflowpro_recurring_required() {
   if( ! variable_get('uc_payflowpro_enable_recurring', 0) ) {
-    trigger_error(t('Warning: You need to enable recurring products in the gateway settings to use this tool.'));
+    trigger_error(t('Warning: You need to enable recurring products in the <a href="@gateway-settings">gateway settings</a> to use this tool.', array('@gateway-settings' => url('admin/store/settings/payment/edit/gateways'))));
   }
 }
 
