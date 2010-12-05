@@ -184,7 +184,7 @@ class PayflowProRecurring {
     }
     else {
       $this->return_code = (int)$response->RecurringProfileResult->Result;
-      $this->return_msg = _payflowpro_code_to_string($this->returnCode);
+      $this->return_msg = $response->RecurringProfileResult->Message;
       return false;
     }
     return $response;
@@ -372,7 +372,7 @@ class PayflowProRecurring {
     }
     else {
       $this->return_code = (int)$response->RecurringProfileResult->Result;
-      $this->return_msg = _payflowpro_code_to_string($this->returnCode);
+      $this->return_msg = $response->RecurringProfileResult->Message;
       return false;
     }
     return $response;

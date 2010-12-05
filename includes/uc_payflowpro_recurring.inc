@@ -1036,21 +1036,40 @@ function uc_payflowpro_cancel_form($form_state, $profile_id, $cancel_path) {
  * Submit form for a profile from the cpanel
  */
 function uc_payflowpro_cancel_form_submit($form, &$form_state) {
+  global $user;
+	$pid = $form_state['values']['profile_id'];
+  $order_id = $form_state['values']['order_id'];
 
   // Load up the profile
-  $profile = new PayflowProRecurring($form_state['values']['profile_id'], _uc_payflowpro_get_auth());
+  $profile = new PayflowProRecurring($pid, _uc_payflowpro_get_auth());
   $profile->refresh();
+
   // Cancel
   $try = $profile->cancel();
-  if(!$try) {
-    if($profile->getReturnCode() != '33') {
-      drupal_set_message(t('Unable to cancel your subscription at this time.'), 'error');
-      drupal_set_message(t('Error: %error_msg', array('%error_msg' => $profile->getReturnMsg())));
+  if(!$try) { // Failed
+    $message = $profile->getReturnMsg();
+    drupal_set_message(t('Unable to cancel your subscription at this time.  Error: @error_msg',
+      array('@error_msg' => $message)), 'error');
+    if (!empty($order_id)) {
+      uc_order_comment_save($order_id, $user->uid,
+        t('payflow: Recurring profile @pid cancel error: @error_msg.',
+           array('@pid' => $pid, '@error_msg' => $message)
+         ), 'admin');
     }
   }
-  // We can add more code here to un-subscribe, deactivate certain features
+  else { // Success
+    drupal_set_message(t('Your subscription has been canceled.'));
+  	if (!empty($order_id)) {
+      // Leave an order comment
+      uc_order_comment_save($order_id, $user->uid,
+        t('payflow: Recurring profile @pid canceled.',
+           array('@pid' => $pid)
+         ), 'admin');
+    }
+  }
 
-  drupal_set_message(t('Your subscription has been canceled.'));
+  // There could potentially be a hook here for better integration with uc_roles, etc.
+
   $form_state['redirect'] = $form_state['values']['post_dest'];
 }
 
@@ -1147,13 +1166,13 @@ function uc_payflowpro_cc_update_form_submit($form, &$form_state) {
 
   // Update remote data
   $try = $profile->update();
-  if(!$try && $profile->getReturnCode() != '33') {
+  if(!$try) { // Failed
     $message = $profile->getReturnMsg();
-    drupal_set_message(t('Unable to update your subscription at this time.'), 'error');
-    drupal_set_message(t('Error: @error_msg', array('@error_msg' => $message)));
+    drupal_set_message(t('Unable to update your subscription at this time.  Error: @error_msg',
+      array('@error_msg' => $message)), 'error');
     if (!empty($order_id)) {
       uc_order_comment_save($order_id, $user->uid,
-        t('payflow: Recurring profile @pid update error .',
+        t('payflow: Recurring profile @pid update error: @error_msg.',
            array('@pid' => $pid, '@error_msg' => $message)
          ), 'admin');
     }
