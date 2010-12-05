@@ -815,6 +815,9 @@ function uc_payflowpro_user_panel() {
     if(arg(6) == 'cancel' || arg(4) == 'cancel') {
       return drupal_get_form('uc_payflowpro_cancel_form', $profile_id, $base_url);
     }
+    elseif(arg(6) == 'cc_update' || arg(4) == 'cc_update') {
+      return drupal_get_form('uc_payflowpro_cc_update_form', $profile_id, $base_url);
+    }
     else {
       return uc_payflowpro_cpanel_view_profile($profile_id);
     }
@@ -892,7 +895,8 @@ function uc_payflowpro_cpanel_view_profile($pid) {
     '#title' => t('Tender'),
     '#value' => theme('payflowpro_tender', $profile->getTender()),
   );*/
-  $page .= theme('payflowpro_tender', $profile->getTender());
+  $update_link = $profile->getStatus() == 'ACTIVE' ? l(t('update credit card info'), $base_url . '/cc_update') : '';
+  $page .= theme('payflowpro_tender', $profile->getTender(), $update_link);
 
   if($profile->getStatus() == 'ACTIVE' && $profile->getLastPaymentStatus() != 0) {
     drupal_set_message(t(strtoupper('This profile is scheduled to be deactived due to non-payment.')), 'error');
@@ -972,12 +976,16 @@ function uc_payflowpro_cpanel_view_profile($pid) {
   return $page;
 }
 
-function theme_payflowpro_tender($tender) {
+function theme_payflowpro_tender($tender, $update_link = NULL) {
   $output = '';
 
   if(isset($tender['Card'])) {
     $tender = $tender['Card'];
-    $output .= '<strong>' . t('Card') . "</strong>: {$tender->CardNum}<br />";
+    $output .= '<strong>' . t('Card') . "</strong>: {$tender->CardNum} ";
+    if (!empty($update_link)) {
+    	$output .= '&nbsp;&nbsp;&nbsp;' . $update_link;
+    }
+    $output .= '<br />';
     $output .= '<strong>' . t('Expiration') . "</strong>: " . substr($tender->ExpDate,0,2) . '/' . substr($tender->ExpDate,2,2) . '<br />';
   }
 
@@ -1077,4 +1085,97 @@ function _uc_payflowpro_ec_subscription_cancel($txnid) {
   // Ubercart
 
   return;
+}
+
+function uc_payflowpro_cc_update_form($form_state, $profile_id, $cc_update_path) {
+  drupal_set_title(t('Update Credit Card Info'));
+
+  $order_id = db_result(db_query("SELECT order_id FROM {uc_payflowpro_recurring_profiles} WHERE pfp_profile_id = '%s'", $profile_id));
+  $order = uc_order_load($order_id);
+
+	$form = array();
+  $form['info'] = array('#value' => '<p>'.t('Complete the form below to change the credit card billed for this recurring order.') . '</p>');
+  $form['profile_id'] = array('#type' => 'hidden', '#value' => $profile_id);
+  $form['order_id'] = array('#type' => 'hidden', '#value' => $order_id);
+  $form['#destination'] = $cc_update_path;
+  $form['post_dest'] = array('#type' => 'hidden', '#value' => $cc_update_path);
+
+  // Add the cc fields to the form.
+  $form['cc_data'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Credit card details'),
+    '#theme' => 'uc_payment_method_credit_form',
+    '#tree' => TRUE,
+  );
+  $form['cc_data'] += uc_payment_method_credit_form(array(), $order);
+
+  // The CC number will be returned in the format (Last 4) 4321, which might confuse the customer.
+  unset($form['cc_data']['cc_number']['#default_value']);
+
+  // The CC policy only makes sense in the cart context.
+  unset($form['cc_data']['cc_policy']);
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Update'),
+  );
+
+  return $form;
+}
+
+function uc_payflowpro_cc_update_form_submit($form, &$form_state) {
+  global $user;
+  $pid = $form_state['values']['profile_id'];
+  $order_id = $form_state['values']['order_id'];
+  if (!empty($order_id)) {
+    $order = uc_order_load($order_id);
+  }
+
+  // Load up the profile
+  $profile = new PayflowProRecurring($pid, _uc_payflowpro_get_auth());
+  $profile->refresh();
+
+  // Set up the items to modify (currently only CC info supported).
+  $profile->clearUpdate(); // Make sure nothing else gets changed.
+  $payment = $form_state['values']['cc_data'];
+  $tender['Type'] = 'C';
+  $tender['CardNum'] = $payment['cc_number'];
+  $tender['NameOnCard'] = $payment['cc_owner'];
+  $tender['ExpDate'] = $payment['cc_exp_year'] . sprintf('%02d', $payment['cc_exp_month']);
+  $tender['CVNum'] = $payment['cc_cvv'];
+  $profile->setTender($tender);
+
+  // Update remote data
+  $try = $profile->update();
+  if(!$try && $profile->getReturnCode() != '33') {
+    $message = $profile->getReturnMsg();
+    drupal_set_message(t('Unable to update your subscription at this time.'), 'error');
+    drupal_set_message(t('Error: @error_msg', array('@error_msg' => $message)));
+    if (!empty($order_id)) {
+      uc_order_comment_save($order_id, $user->uid,
+        t('payflow: Recurring profile @pid update error .',
+           array('@pid' => $pid, '@error_msg' => $message)
+         ), 'admin');
+    }
+  }
+  else { // Success
+    drupal_set_message(t('Your credit card information has been updated.'));
+    if (!empty($order_id)) {
+    	// Update the CC info listed in the order row.
+    	foreach($form_state['values']['cc_data'] as $key => $value) {
+    		$order->payment_details[$key] = $value;
+    	}
+    	uc_order_save($order);
+
+    	// And leave a comment
+    	uc_order_comment_save($order_id, $user->uid,
+	      t('payflow: CC into for recurring profile @pid updated.',
+	         array('@pid' => $pid)
+	       ), 'admin');
+    }
+  }
+
+  // We can add more code here to un-subscribe, deactivate certain features
+
+  $form_state['redirect'] = $form_state['values']['post_dest'];
 }

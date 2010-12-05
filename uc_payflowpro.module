@@ -113,6 +113,19 @@ function uc_payflowpro_menu() {
   return $items;
 }
 
+/**
+ * Implementation of hook_theme()
+ */
+function uc_payflowpro_theme($existing, $type, $theme, $path) {
+  return array(
+    'payflowpro_tender' => array(
+      'arguments' => array('tender' => NULL, 'update_link' => NULL),
+    ),
+    'payflow_address' => array(
+      'arguments' => array('title' => 'Address', 'address' => NULL),
+    ),
+  );
+}
 
 /**
  * Implementation of hook_form_alter()

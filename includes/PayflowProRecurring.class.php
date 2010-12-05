@@ -280,6 +280,13 @@ class PayflowProRecurring {
     return $xml;
   }
 
+  private function getUpdateXML() {
+    // RPData is another param, and can be used to modify other info about the profile (not implemented yet).
+    // Would need to use $this->update_items to build it, or something similar.
+    $xml = '<Modify>' . $this->getTenderXML() . '<ProfileID>' . check_plain($this->getProfileID()) . '</ProfileID></Modify>';
+    return $xml;
+  }
+
   /**
    * Call this function to add someone.
    * The getRPDataXML is a HELPER function for this one.
@@ -341,12 +348,34 @@ class PayflowProRecurring {
   }
 
   /**
-   *
-   * This function runs through the items that have been set
-   * to be updated, and then sends the information to PFP
+   * Currenty just allows updating of CC info, could be extended later.
    */
   public function update() {
-    return;
+    $profile_id = $this->getProfileID();
+    $options = array();
+
+    # Build XML
+    $transaction = '';
+    // Get the cancel transaction xml
+    $action = $this->getUpdateXML();
+    // Wrap the cancel transction in a profile
+    $transaction = $this->profileWrap($action);
+
+    // Final Wrap
+    $xml = $this->recurringXMLPayWrap($transaction);
+
+    // Send XML
+    $response = $this->sendTransaction(trim($xml));
+
+    if($response->RecurringProfileResult->Result == 0) {
+      return true;
+    }
+    else {
+      $this->return_code = (int)$response->RecurringProfileResult->Result;
+      $this->return_msg = _payflowpro_code_to_string($this->returnCode);
+      return false;
+    }
+    return $response;
   }
 
   public function setUpdate($item, $val) {
@@ -390,6 +419,10 @@ class PayflowProRecurring {
   }
 
   public function setTerm($term) {
+    $term = intval($term);
+    if ($term < 0) {
+      $term = 0;
+    }
     $this->isCreateNew();
     $this->profile_term = $term;
   }
