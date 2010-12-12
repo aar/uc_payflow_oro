@@ -1044,9 +1044,19 @@ function _uc_payflowpro_invoice_xml($order) {
     }
   }
 
+  // There are many useful things to put in the order comment, but it's not possible to predict and fit all of them.
+  // Let the module's users define their own comments, and define a reasonable default if they do not.
+  $comment = module_invoke_all('uc_payflow_pro_transaction_comment', $order);
+  if (!empty($comment)) {
+  	$comment = implode('; ', $comment);
+  }
+  else { // Default to a list of all SKUs used in the order.
+  	$comment = _uc_get_skus($order);
+  }
+
   $xml = '            <Invoice>
               <InvNum>' . intval($order->order_id) . '</InvNum>
-              <Comment>' . check_plain(_uc_get_skus($order)) . '</Comment>
+              <Comment>' . check_plain($comment) . '</Comment>
               <BillTo>
                 <Name>' . trim(check_plain($order->billing_first_name . ' ' . $order->billing_last_name)) . '</Name>
                 <Phone>' . check_plain($order->billing_phone) . '</Phone>
