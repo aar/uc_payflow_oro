@@ -6,6 +6,7 @@ UC Payflow Pro 6.x-1.4, XXXX-XX-XX
 #907922 by chillin411: Adding Link to Enable Recurring Payments error
 #989772 by kwinters: Recurring Cancel and CC Update Logging Improvements
 #976994 by kwinters: Transaction comments hook
+#1012744 by AntoineSolutions: Usability improvements to the transaction mode UI
 
 UC Payflow Pro 6.x-1.3, 2010-06-03
 ------------------------------

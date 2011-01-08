@@ -309,11 +309,12 @@ function uc_payflowpro_settings_form() {
 
   $form['payflowpro_settings']['uc_payflowpro_mode'] = array(
     '#type' => 'radios',
-    '#title' => t('Mode'),
+    '#title' => t('Transaction Mode'),
+    '#description' =>t('Transactions are run through the test server by default. Adjust to live transactions when you are ready to start processing real payments.'),
     '#default_value' => variable_get('uc_payflowpro_mode', 'test'),
     '#options' => array(
-      'test' => 'Test',
-      'live' => 'Live',
+      'test' => t('Test transactions'),
+      'live' => t('Live transactions'),
     ),
   );
   $form['payflowpro_settings']['uc_payflowpro_payment_action'] = array(
