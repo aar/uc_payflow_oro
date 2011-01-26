@@ -72,14 +72,14 @@ function uc_payflowpro_recurring_charge_process($order) {
                  $result->RPRef,
                  $result->Result, $item->model);
 
-        $message = t('Recurring payment processed successfully with profile ID !pfp_profile_id.', array(
-          '!pfp_profile_id' => $result->ProfileID,
+        $message = t('Recurring payment processed successfully with profile ID @pfp_profile_id.', array(
+          '@pfp_profile_id' => $result->ProfileID,
         ));
       } else {
-        $message = t('Recurring payment declined for !amount with error code !return_code (!message).', array(
+        $message = t('Recurring payment declined for !amount with error code @return_code (@message).', array(
           '!amount' => uc_currency_format($item->price),
-          '!return_code' => $result->Result,
-          '!message' => $result->Message,
+          '@return_code' => $result->Result,
+          '@message' => $result->Message,
         ));
       }
 

@@ -1,6 +1,6 @@
 // $Id$
 
-UC Payflow Pro 6.x-1.4, XXXX-XX-XX
+UC Payflow Pro 6.x-1.4, 2011-01-26
 ------------------------------
 #796962 by kwinters: Backport of customer credit card number update
 #907922 by chillin411: Adding Link to Enable Recurring Payments error

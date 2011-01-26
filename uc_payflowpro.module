@@ -227,19 +227,19 @@ function uc_payflowpro_charge($order_id, $amount, $data) {
   $txn_message = $response->Message;
 
   if ((int)$txn_result_code != 0) {
-    $message = t('Credit card declined for !amount with error code !return_code (!message).', array(
+    $message = t('Credit card declined for !amount with error code @return_code (@message).', array(
       '!amount' => uc_currency_format($amount),
-      '!return_code' => $txn_result_code,
-      '!message' => $txn_message,
+      '@return_code' => $txn_result_code,
+      '@message' => $txn_message,
     ));
     $data = array();
-    $data['pnref'] = (string)$response->PNRef;
-    $data['authcode'] = (string)$response->AuthCode;
-    $data['result'] = (string)$response->Result;
+    $data['pnref'] = check_plain((string)$response->PNRef);
+    $data['authcode'] = check_plain((string)$response->AuthCode);
+    $data['result'] = check_plain((string)$response->Result);
     $result = array(
       'success' => FALSE,
-      'comment' => t('Credit card payment declined: !text', array('!text' => $txn_message)),
-      'message' => t('Credit card payment declined: !text', array('!text' => $txn_message)),
+      'comment' => t('Credit card payment declined: @text', array('@text' => $txn_message)),
+      'message' => t('Credit card payment declined: @text', array('@text' => $txn_message)),
       'uid' => $user->uid,
       'data' => $data,
     );
@@ -247,18 +247,18 @@ function uc_payflowpro_charge($order_id, $amount, $data) {
   else {
     $x_approval_code = $response->AuthCode;
     $pnref = $response->PNRef;
-    $message = t('Credit card payment processed successfully with approval code !code and pnref !pnref.', array(
-      '!code' => $x_approval_code,
-      '!pnref' => $pnref,
+    $message = t('Credit card payment processed successfully with approval code @code and pnref @pnref.', array(
+      '@code' => $x_approval_code,
+      '@pnref' => $pnref,
     ));
     $data = array();
-    $data['pnref'] = (string)$response->PNRef;
-    $data['authcode'] = (string)$response->AuthCode;
-    $data['result'] = (string)$response->Result;
+    $data['pnref'] = check_plain((string)$response->PNRef);
+    $data['authcode'] = check_plain((string)$response->AuthCode);
+    $data['result'] = check_plain((string)$response->Result);
     $result = array(
       'success' => TRUE,
-      'comment' => t('Credit card payment processed successfully with approval code !code and pnref !pnref.', array('!code' => $x_approval_code, '!pnref' => $pnref)),
-      'message' => t('Credit card payment processed successfully with approval code !code and pnref !pnref.', array('!code' => $x_approval_code, '!pnref' => $pnref)),
+      'comment' => t('Credit card payment processed successfully with approval code @code and pnref @pnref.', array('@code' => $x_approval_code, '@pnref' => $pnref)),
+      'message' => t('Credit card payment processed successfully with approval code @code and pnref @pnref.', array('@code' => $x_approval_code, '@pnref' => $pnref)),
       'uid' => $user->uid,
       'data' => $data,
     );
