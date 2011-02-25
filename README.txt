@@ -1,4 +1,3 @@
-// $Id$
 
 Ubercart Payflow Pro Payment Gateway README
 

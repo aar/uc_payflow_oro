@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 function uc_payflowpro_schema() {
   $schema = array();
