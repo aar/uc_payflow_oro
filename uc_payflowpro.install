@@ -1,0 +1,203 @@
+<?php
+// $Id: uc_payflowpro.install,v 1.2.2.3 2009/07/07 18:40:59 kwinters Exp $
+
+function uc_payflowpro_schema() {
+  $schema = array();
+  $schema['uc_payflowpro_recurring_products'] = array(
+    'description' => t('Identifies products which are recurring.'),
+    'fields' => array(
+      'uc_pfp_rpid' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ),
+      'vid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ),
+      'sid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ),
+    ),
+    'primary key' => array('uc_pfp_rpid'),
+  );
+  $schema['uc_payflowpro_recurring_schedules'] = array(
+    'description' => t('How many times and how often the recurring payment will be processed.'),
+    'fields' => array(
+      'sid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'title' => array(
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => FALSE,
+      ),
+      'description' => array(
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+      'terms' => array(
+        'type' => 'int',
+        'not null' => FALSE,
+        'unsigned' => TRUE,
+      ),
+      'period' => array(
+        'type' => 'char',
+        'length' => 2,
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('sid'),
+  );
+  $schema['uc_payflowpro_recurring_profiles'] = array(
+    'description' => t('Contains successfully charged recurring transaction log data.'),
+    'fields' => array(
+      'pfp_pid' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ),
+      'txnid' => array(
+        'type' => 'int',
+        'not null' => FALSE,
+        'unsigned' => TRUE,
+      ),
+      'order_id' => array(
+        'type' => 'int',
+        'not null' => FALSE,
+        'unsigned' => TRUE,
+      ),
+      'uc_model' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'nid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+      ),
+      'vid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+      ),
+      'pfp_uid' => array(
+        'type' => 'int',
+        'not null' => FALSE,
+        'unsigned' => TRUE,
+      ),
+      'pfp_profile_id' => array(
+        'type' => 'varchar',
+        'length' => 20,
+        'not null' => FALSE,
+      ),
+      'pfp_rpref' => array(
+        'type' => 'varchar',
+        'length' => 20,
+        'not null' => FALSE,
+      ),
+      'pfp_origid' => array(
+        'type' => 'varchar',
+        'length' => 20,
+        'not null' => FALSE,
+      ),
+      'pfp_status' => array(
+        'type' => 'char',
+        'length' => 1,
+        'not null' => FALSE,
+      ),
+      'next_payment_date' => array(
+        'type' => 'int',
+        'not null' => FALSE,
+        'unsigned' => TRUE,
+      ),
+      'last_status_check' => array(
+        'type' => 'int',
+        'not null' => FALSE,
+        'unsigned' => TRUE,
+      ),
+      'payment_status' => array(
+        'type' => 'varchar',
+        'length' => 45,
+        'not null' => FALSE,
+      ),
+      'profile_status' => array(
+        'type' => 'varchar',
+        'length' => 45,
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('pfp_pid'),
+  );
+  return $schema;
+}
+
+function uc_payflowpro_install() {
+  drupal_install_schema('uc_payflowpro');
+}
+
+function uc_payflowpro_update_1() {
+  $ret = array();
+  db_add_field($ret, 'uc_payflowpro_recurring_profiles', 'next_payment_date', array(
+    'type' => 'int',
+    'not null' => FALSE,
+    'unsigned' => TRUE,
+  ));
+  db_add_field($ret, 'uc_payflowpro_recurring_profiles', 'last_status_check', array(
+    'type' => 'int',
+    'not null' => FALSE,
+    'unsigned' => TRUE,
+  ));
+  db_add_field($ret, 'uc_payflowpro_recurring_profiles', 'payment_status', array(
+    'type' => 'varchar',
+    'length' => 45,
+    'not null' => FALSE,
+  ));
+  db_add_field($ret, 'uc_payflowpro_recurring_profiles', 'profile_status', array(
+    'type' => 'varchar',
+    'length' => 45,
+    'not null' => FALSE,
+  ));
+  return $ret;
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function uc_payflowpro_uninstall() {
+  drupal_uninstall_schema('uc_payflowpro');
+  
+  //This block is referenced but never set.
+  /*variable_del('ec_payflowpro_partner');
+  variable_del('ec_payflowpro_password');
+  variable_del('ec_payflowpro_sdk_cert_path');
+  variable_del('ec_payflowpro_tx_mode');
+  variable_del('ec_payflowpro_user');
+  variable_del('ec_payflowpro_vendor');*/
+
+  //These variables are actually set by the settings form.
+  variable_del('uc_payflowpro_cert_path');
+  variable_del('uc_payflowpro_ec_reqconfirmed_addr');
+  variable_del('uc_payflowpro_ec_review_comment');
+  variable_del('uc_payflowpro_ec_review_company');
+  variable_del('uc_payflowpro_ec_review_phone');
+  variable_del('uc_payflowpro_ec_review_shipping');
+  variable_del('uc_payflowpro_enable_recurring');
+  variable_del('uc_payflowpro_error_codes_accept');
+  variable_del('uc_payflowpro_mode');
+  variable_del('uc_payflowpro_partner');
+  variable_del('uc_payflowpro_password');
+  variable_del('uc_payflowpro_payment_action');
+  variable_del('uc_payflowpro_recurring_site_key');
+  variable_del('uc_payflowpro_user');
+  variable_del('uc_payflowpro_vendor');
+  variable_del('uc_payment_method_payflowpro_ec_checkout');
+}

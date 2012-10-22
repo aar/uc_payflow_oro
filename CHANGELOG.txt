@@ -1,0 +1,71 @@
+// $Id: CHANGELOG.txt,v 1.1.2.40 2011/01/26 00:43:50 kwinters Exp $
+
+UC Payflow Pro 6.x-1.4, 2011-01-26
+------------------------------
+#796962 by kwinters: Backport of customer credit card number update
+#907922 by chillin411: Adding Link to Enable Recurring Payments error
+#989772 by kwinters: Recurring Cancel and CC Update Logging Improvements
+#976994 by kwinters: Transaction comments hook
+#1012744 by AntoineSolutions: Usability improvements to the transaction mode UI
+
+UC Payflow Pro 6.x-1.3, 2010-06-03
+------------------------------
+#810700 by aaron1234nz: Postgres compatibility
+#809854 by kwinters, mcabalaji: Gateway Settings Form Usability Issues
+
+UC Payflow Pro 6.x-1.2, 2010-04-21
+------------------------------
+#554910 by retorque, kwinters: Cert path instructions for Windows (abs path)
+#764874 by kwinters, beifler: Credit Card # is not passed correctly for Recurring Billing profiles 
+#631232 by beifler, kwinters: Customers cannot cancel their own recurring fees
+#770000 by kwinters, beifler: Frequent Cron Runs Create Duplicate Recurring Payments
+#769990 by kwinters, beifler: Recurring Option to Update Orders not Duplicate
+#770008 by kwinters, beifler: Better UC Roles Integration
+
+UC Payflow Pro 6.x-1.1, 2010-02-08
+------------------------------
+#634806 by Kuldip Gohil, kwinters: Debug Tool Update for D6
+#706026 by arski: Warning message on variable_get call in Express Checkout
+
+UC Payflow Pro 6.x-1.1-beta5, 2009-08-20
+------------------------------
+#553864 by kwinters: Fixed orders with taxes fatal error
+#550762 by cjdavis, kwinters: Only show recurring user tab if recurring is enabled
+
+UC Payflow Pro 6.x-1.1-beta4, 2009-08-15
+------------------------------
+#549938 by mwillis: Transaction Unique ID uses variable that has been renamed
+#524538 by mwillis, kwinters: Correct string length for X-VPS-Request-ID
+
+UC Payflow Pro 6.x-1.1-beta3, 2009-08-06
+------------------------------
+#512618 by kwinters: Fixed Payment Period PFP Codes (other fixes)
+#536914 by kwinters: Improved loading of include files
+
+UC Payflow Pro 6.x-1.1-beta2, 2009-07-15
+------------------------------
+#519382 by kwinters: Automatic New Account Recurring Profile Access
+#519452 by jrguitar21, kwinters: Watchdog Message Improvements
+
+UC Payflow Pro 6.x-1.1-beta1, 2009-07-14
+------------------------------
+#505514 by kwinters: Account Panel Recurring Tab Permissions Improvement
+#494492 by kwinters: Sending better address data to PFP
+#517402 by cjdavis, kwinters: Fixed old syntax for watchdog() call
+#494476 by kwinters: Fixed In-Cart Recurring Period
+#512618 by kwinters: Fixed Payment Period PFP Codes
+#494606 by kwinters: Implementing start dates for remaining period types
+#507268 by jrguitar21: Undefined Function in Express Checkout Review
+#495382 by jcfiala, kwinters: Remaining Menu / Form / Install D6 Conversion
+#499350 by kwinters: Fixed Billing Name Reported as NotProvided
+
+UC Payflow Pro 6.x-1.0-beta2, 2009-5-26
+------------------------------
+#318351 by neilnz, kwinters: Fixed XML encoding for html entities
+#292063 by AntoineSolutions, kwinters: Added uninstall hook
+#291538 by AntoineSolutions, kwinters: Code style changes from a D5 bugfix 
+#462726 by kwinters: Line endings
+
+UC Payflow Pro 6.x-1.0-beta1, 2009-5-13
+------------------------------
+Initial release of uc_payflowpro module for D6

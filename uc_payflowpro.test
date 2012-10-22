@@ -1,0 +1,58 @@
+<?php
+/**
+ * @file
+ * Tests for the uc_payflowpro module
+ */
+
+class UCPayflowProTestCase extends DrupalWebTestCase {
+  function setUp() {
+    parent::setUp('uc_payflowpro', 'uc_payflowpro_test');
+  }
+}
+
+class CalcStartDateTestCase extends UCPayflowProTestCase {
+  public static function getInfo() {
+    return array(
+      'name' => t('Calculate Start Date'),
+      'description' => t('Test the calculation of start dates for recurring profiles.'),
+      'group' => t('UCPayflowPro')
+    );
+  }
+
+  function testStartDate() {
+    
+    //test each period with a set of date inputs
+    $testArray = array(
+      'W' => array( 
+        'Dec 25 2008' => 'Jan 01 2009',
+        'Jan 01 2009' => 'Jan 08 2009', 'Jan 10 2009' => 'Jan 17 2009', 'Jan 15 2009' => 'Jan 22 2009', 
+        'Jan 20 2009' => 'Jan 27 2009', 'Jan 28 2009' => 'Feb 04 2009', 'Jan 29 2009' => 'Feb 05 2009', 
+        'Jan 30 2009' => 'Feb 06 2009', 'Jan 31 2009' => 'Feb 07 2009',  
+        'Feb 28 2009' => 'Mar 07 2009', 'Feb 28 2012' => 'Mar 06 2012', 'Feb 29 2012' => 'Mar 07 2012', 
+       ),
+      'B' => array( 'Jan 01 2009' => 'Jan 15 2009', 'Jan 20 2009' => 'Feb 03 2009'),
+      'SM'=> array( 
+        'Dec 25 2008' => 'Jan 15 2009',
+        'Jan 01 2009' => 'Jan 15 2009', 'Jan 10 2009' => 'Feb 01 2009', 'Jan 15 2009' => 'Feb 01 2009', 
+        'Jan 20 2009' => 'Feb 15 2009', 'Jan 30 2009' => 'Feb 15 2009', 'Jan 31 2009' => 'Feb 15 2009',  
+        'Feb 28 2009' => 'Mar 15 2009', 'Feb 28 2012' => 'Mar 15 2012', 'Feb 29 2012' => 'Mar 15 2012', 
+       ),
+      '4W'=> array( 'Jan 01 2009' => 'Jan 29 2009', 'Jan 20 2009' => 'Feb 17 2009'),
+      'M' => array( 'Dec 25 2008' => 'Jan 25 2009', 'Dec 28 2008' => 'Jan 28 2009', 'Dec 29 2008' => 'Feb 01 2009', ),
+      'Q' => array( 'Dec 25 2008' => 'Mar 25 2009', 'Dec 28 2008' => 'Mar 28 2009', 'Dec 29 2008' => 'Apr 01 2009', ),
+      'SA'=> array( 'Dec 25 2008' => 'Jun 25 2009', 'Dec 28 2008' => 'Jun 28 2009', 'Dec 29 2008' => 'Jul 01 2009', ),
+      'Y' => array( 'Dec 25 2008' => 'Dec 25 2009', 'Feb 28 2012' => 'Feb 28 2013', 'Feb 29 2012' => 'Mar 01 2013', ),
+    );
+  
+    foreach ($testArray as $period => $dataInfo) {
+      foreach ($dataInfo as $fromDate => $resultDate) {
+        $this->assertEqual(
+          _uc_pfp_calc_start_date($period, strtotime($fromDate)), 
+          strtotime($resultDate), 
+          t("Start date for period $period from $fromDate = $resultDate")
+        );
+      }
+    }
+  }
+}
+
