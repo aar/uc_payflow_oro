@@ -13,10 +13,10 @@ define('UC_PFP_OSTYPE_WINDOWS', 1);
 define('UC_PFP_OSTYPE_LINUX', 2);
 
 // Must always include files that contain hooks.  TODO: Utilize dynamic loading and module_load_include
-require_once('uc_payflowpro.ca.inc');
+//require_once('uc_payflowpro.ca.inc');
 require_once('includes/payflowpro_utils.inc');
-require_once('includes/PayflowProRecurring.class.php');
-require_once('includes/uc_payflowpro_recurring.inc');
+//require_once('includes/PayflowProRecurring.class.php');
+//require_once('includes/uc_payflowpro_recurring.inc');
 
 /*******************************************************************************
  * Hook Functions (Drupal)
@@ -59,6 +59,7 @@ function uc_payflowpro_menu() {
     'type' => MENU_CALLBACK,
   );
 
+  /*
   // Recurring Billing administration
   $items['admin/store/settings/uc_recurring'] = array(
     'title' => 'Payflow Pro Recurring Settings',
@@ -92,13 +93,6 @@ function uc_payflowpro_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
-  $items['admin/settings/uc_payflowpro_debug'] = array(
-    'title' => 'PFP Debug',
-    'page callback' => 'uc_payflowpro_debug',
-    'access arguments' => array('administer products'),
-    'type' => MENU_CALLBACK,
-  );
-
   // If recurring transactions are enabled and you can view your own orders,
   // allow you to see the recurring profiles tab on the user account page.
   if( variable_get('uc_payflowpro_enable_recurring', 0) ) {
@@ -109,6 +103,14 @@ function uc_payflowpro_menu() {
       'access arguments' => array('view own orders'),
     );
   }
+   */
+
+  $items['admin/settings/uc_payflowpro_debug'] = array(
+    'title' => 'PFP Debug',
+    'page callback' => 'uc_payflowpro_debug',
+    'access arguments' => array('administer products'),
+    'type' => MENU_CALLBACK,
+  );
 
   return $items;
 }
@@ -149,7 +151,7 @@ function uc_payflowpro_form_alter(&$form, $form_state, $form_id) {
 /**
  * Implementation of hook_cart_pane()
  */
-function uc_payflowpro_cart_pane() {
+function uc_payflowpro_uc_cart_pane() {
 
   $panes[] = array(
     'id' => 'uc_payflowpro_ec',
@@ -165,7 +167,7 @@ function uc_payflowpro_cart_pane() {
 /**
 * Implementation of hook_payment_method().
  */
-function uc_payflowpro_payment_method() {
+function uc_payflowpro_uc_payment_method() {
   $title1 = '<img src="https://www.paypal.com/en_US/i/logo/PayPal_mark_37x23.gif" style="position: relative; top: 5px; margin-right: 4px;">'
             . t('PayPal - pay without sharing your financial information.');
 
@@ -185,12 +187,11 @@ function uc_payflowpro_payment_method() {
 }
 
 /**
- * Implementation of hook_payment_gateway()
+ * Implementation of hook_uc_payment_gateway()
  */
-function uc_payflowpro_payment_gateway() {
+function uc_payflowpro_uc_payment_gateway() {
 
-  $gateways[] = array(
-    'id' => 'payflowpro',
+  $gateways['payflowpro'] = array(
     'title' => t('PayPal PayFlow Pro'),
     'description' => t('Process credit card payments using the PayFlow service of PayPal.'),
     'settings' => 'uc_payflowpro_settings_form',
@@ -277,7 +278,7 @@ function uc_payflowpro_charge($order_id, $amount, $data) {
  * Check for 0 balance and update the status
  * hook_order
  */
-function uc_payflowpro_order($op, &$arg1, $arg2) {
+function uc_payflowpro_uc_order($op, &$arg1, $arg2) {
 
   switch ($op) {
     case 'update':
@@ -334,6 +335,7 @@ function uc_payflowpro_settings_form() {
                          downloaded from the PayFlow Pro site.'),
     '#default_value' => variable_get('uc_payflowpro_cert_path', drupal_get_path('module', 'uc_payflowpro') . '/cacert/cacert.pem'),
   );
+  /*
   $form['payflowpro_settings']['recurring'] = array(
     '#type' => 'fieldset',
     '#title' => t('Recurring Settings'),
@@ -361,7 +363,8 @@ function uc_payflowpro_settings_form() {
                         sites. This should be short, all letters or numbers or both,
                         e.g. mysite, or prodsite, etc.'),
     '#default_value' => variable_get('uc_payflowpro_recurring_site_key', ''),
-  );
+  ); 
+   */
   $form['payflowpro_settings']['api'] = array(
     '#type' => 'fieldset',
     '#title' => t('API Credentials'),
@@ -934,8 +937,10 @@ function _uc_payflowpro_submit_xml($xml, $mode = NULL) {
   curl_setopt($ch, CURLOPT_CAINFO, $certpath);
 
   //WARNING: Uncommenting below this would prevent curl from detecting a 'man in the middle' attack
-  //curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-  //curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+  if (variable_get('uc_payflowpro_mode', 'test') === 'test') {
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);    
+  }
   //
 
   curl_setopt($ch, CURLOPT_FORBID_REUSE, TRUE);
@@ -1108,9 +1113,9 @@ function _uc_payflowpro_cc_sale_xml($order_id, $amount, $data) {
    // Get payment action (Sale or Authorization)
   $payment_action = variable_get('uc_payflowpro_payment_action', '');
 
-  if (strlen($cc_exp_month) == 2) {
+  /*if (strlen($cc_exp_month) == 2) {
     $cc_exp = $cc_exp_year .  $cc_exp_month;
-  }
+  }*/
 
   $xml = '         <' . $payment_action . '>
           <PayData>
@@ -1281,6 +1286,7 @@ function _uc_payflowpro_recurring_profile($order, $opt = array()) {
 /**
  * Implementation of hook_cron
  */
+/*
 function uc_payflowpro_cron() {
   // Sync every profile once per day.
   // If the profile is canceled via manager.paypal.com it needs to be updated here.
@@ -1372,7 +1378,7 @@ function uc_payflowpro_cron() {
     unset ($order, $shell_order, $data, $profile, $row);
   }
 }
-
+*/
 /*******************************************************************************
  * Other helper functions
  ******************************************************************************/
