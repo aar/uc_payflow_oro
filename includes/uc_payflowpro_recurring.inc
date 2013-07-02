@@ -528,10 +528,10 @@ function uc_payflowpro_recurring_schedule_edit_form($form_state, $sid = '') {
     '#title' => t('Description'),
     '#default_value' => $s->description,
   );
-  $terms = drupal_map_assoc( array_merge(
+  $terms = array_merge(
     array( 0 => 'Renew Forever' ),
     range( 1, 36 )
-  ));
+  );
   $form['terms'] = array(
     '#type' => 'select',
     '#title' => t('Terms'),
@@ -774,7 +774,7 @@ function _uc_payflowpro_recurring_get_schedule($search) {
 
 /*******************************************************************************
  *
- * Genearl Control Panel Section
+ * General Control Panel Section
  *
  ******************************************************************************/
 
