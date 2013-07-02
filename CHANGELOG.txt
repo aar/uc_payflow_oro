@@ -1,4 +1,10 @@
 
+UC Payflow Pro 6.x-1.5, 2013-07-02
+------------------------------
+#2033373 by kwinters: Log more info when creating payments.
+#2033363 by kwinters, beifler: Fixed error on create recurring schedule.
+#2033349 by kwinters, beifler: Fixed missing payments on user tab.
+
 UC Payflow Pro 6.x-1.4, 2011-01-26
 ------------------------------
 #796962 by kwinters: Backport of customer credit card number update
