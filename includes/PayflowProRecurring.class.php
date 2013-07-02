@@ -101,13 +101,21 @@ class PayflowProRecurring {
 
     $history = (object)$history->RecurringProfileResult;
     $history = array($history);
-    foreach($history as $k => $payment) {
-      if(!isset($payment->RPPaymentResult)) {
+    foreach($history as $k => $payment_wrapper) {
+      if(!isset($payment_wrapper->RPPaymentResult)) {
         continue;
       }
-      $payment = (object)$payment->RPPaymentResult;
-      $payment->Amount = (float)$payment->Amt['Currency'];
-      $this->payment_history[] = (array)$payment;
+
+      foreach($payment_wrapper->children() as $ns => $payment) {
+        // Namespacing in children() added in PHP 5.2, must check manually.
+        if ($ns !== 'RPPaymentResult') {
+          continue;
+        }
+
+        $payment->Amount = (float)$payment->Amt['Currency'];
+        $this->payment_history[] = (array)$payment;
+      }
+
     }
     if(count($this->payment_history) === 0) {
       $this->last_payment_status = null;
