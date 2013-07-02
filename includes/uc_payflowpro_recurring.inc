@@ -1187,7 +1187,7 @@ function uc_payflowpro_cc_update_form_submit($form, &$form_state) {
 
     	// And leave a comment
     	uc_order_comment_save($order_id, $user->uid,
-	      t('payflow: CC into for recurring profile @pid updated.',
+	      t('payflow: CC info for recurring profile @pid updated.',
 	         array('@pid' => $pid)
 	       ), 'admin');
     }
