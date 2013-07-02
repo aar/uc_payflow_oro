@@ -1314,13 +1314,10 @@ function uc_payflowpro_cron() {
       if($profile->getLastPaymentStatus() === 0 && $newPNRef != $row->pfp_rpref) {
         // Prepare data for order comment or new order.
         $order = uc_order_load($row->order_id);
-        $comment = "Logging recurring payment from Payflow Pro for profile " . $profile->getProfileID();
-        $data = array();
         $last_payment = $profile->getLastPayment();
         unset($last_payment['Amt']);
         $data = $last_payment;
-        $data['pnref'] = $last_payment['PNREF'];
-        $data['payment_num'] = $last_payment['PaymentNum'];
+        $comment = "Logging recurring payment from Payflow Pro for profile " . check_plain($profile->getProfileID()) . ', payment #' . intval($last_payment['PaymentNum']) . ', Reference #' . check_plain($last_payment['PNRef']);
 
         // If box was checked, create a new order for this payment.
         // This is not the recommended way to handle it, since it will create
@@ -1336,7 +1333,7 @@ function uc_payflowpro_cron() {
         }
 
         // Add a payment to the order
-        uc_payment_enter($order->order_id, 'payflowpro', $data['Amount'], 0, NULL, $comment);
+        uc_payment_enter($order->order_id, 'payflowpro', $data['Amount'], 0, $data, $comment);
 
         watchdog('payflow_cron', 'Recorded payment for profile @profile_id: order @order_id, next payment @next_payment_date, status @status', array(
           '@profile_id' => $profile->getProfileID(),
@@ -1352,12 +1349,30 @@ function uc_payflowpro_cron() {
           uc_roles_action_order_renew($order, array());
         }
       }
+      else {
+        watchdog('payflow_cron', 'No new payment for profile @profile_id: order @order_id, next payment @next_payment_date, status @status, oldRef @oldRef, newRef @newRef', array(
+          '@profile_id' => $profile->getProfileID(),
+          '@order_id' => $row->order_id,
+          '@next_payment_date' => $profile->getNextPaymentDate('M.d.Y'),
+          '@status' => $profile->getLastPaymentStatus(),
+          '@oldRef' => $row->pfp_rpref,
+          '@newRef' => $newPNRef,
+        ));
+      }
     }
-    else {
+    else { // Inactive.
       $try = db_query("UPDATE {uc_payflowpro_recurring_profiles}
                SET profile_status = '%s', next_payment_date = %d, last_status_check = %d
                WHERE pfp_pid = %d", $profile->getStatus(),
                0, time(), $row->pfp_pid);
+
+      watchdog('payflow_cron', 'Found inactive profile @profile_id: order @order_id, next payment @next_payment_date, status @status, oldRef @oldRef', array(
+        '@profile_id' => $profile->getProfileID(),
+        '@order_id' => $row->order_id,
+        '@next_payment_date' => $profile->getNextPaymentDate('M.d.Y'),
+        '@status' => $profile->getLastPaymentStatus(),
+        '@oldRef' => $row->pfp_rpref,
+      ));
     }
 
     if(!$try) {
