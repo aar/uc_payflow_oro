@@ -975,6 +975,157 @@ function uc_payflowpro_cpanel_view_profile($pid) {
   return $page;
 }
 
+function uc_payflowpro_import_form() {
+  $form = array();
+
+  drupal_set_message(t('Back up your database first!'), 'warning');
+
+  $form['intro'] = array(
+    '#type' => 'markup',
+    '#value' => '<p>' . t('Run this script to import payments that are not associated with orders.') . '</p>',
+  );
+
+  $form['import'] = array(
+    '#type' => 'submit',
+    '#value' => t('Import'),
+  );
+
+  return $form;
+}
+
+function uc_payflowpro_import_form_submit($form, &$form_state) {
+  // Loop through all profiles, including inactive...
+  $rs = db_query("SELECT * FROM {uc_payflowpro_recurring_profiles}");
+  while($row = db_fetch_object($rs)) {
+    // For each profile, grab all payments from PFP.
+    $profile = new PayflowProRecurring($row->pfp_profile_id, _uc_payflowpro_get_auth());
+    $profile->refresh();
+    $history = $profile->getPaymentHistory();
+    if (empty($history)) {
+      watchdog('payflow_import', 'No payments found for @profile_id',
+        array('@profile_id' => $profile->getProfileID()),
+        WATCHDOG_NOTICE
+      );
+      continue;
+    }
+
+    // Format them in a convenient way for comparison.
+    $external = array();
+    foreach($history as $payment) {
+      $external[$payment['PNRef']] = $payment;
+    }
+
+    // This covers situations where there are duplicate payments somehow.
+    $external_diff = $external;
+
+    // Now grab all internal payments matching the profile.
+    $rs2 = db_query("SELECT * FROM {uc_payment_receipts} WHERE
+      method = 'Other' AND comment like '%%%s%%'", $row->pfp_profile_id);
+
+    // Remove payments that we know already exist,
+    // and hold on to the rest.
+    $mismatched_internal = array();
+    while($row2 = db_fetch_array($rs2)) {
+      if (!empty($row2['data']) && ($data = unserialize($row2['data'])) !== false) {
+        // Compare against original list, but remove from diff.
+        // Otherwise duplicates stay in the list.
+        if (isset($data['PNRef']) && isset($external[$data['PNRef']])) {
+          // Is in both, remove from work list.
+          unset($external_diff[$data['PNRef']]);
+          continue;
+        }
+      }
+
+      // Does not have $data['PNRef'], needs to be checked in other ways.
+      // This is true for 6.x-1.5 and earlier.
+      $mismatched_internal[] = $row2;
+    }
+
+    // No PFP payments missing internal payment records.
+    if (empty($external_diff)) {
+      watchdog('payflow_import', 'No missing payments for @profile_id',
+        array('@profile_id' => $profile->getProfileID()),
+        WATCHDOG_NOTICE
+      );
+      continue;
+    }
+
+    // If we have internal payments without PNRefs, do the best we can.
+    // First attempt to match them up by date.
+    if (!empty($mismatched_internal)) {
+      foreach($mismatched_internal as $internal_key => $internal_payment) {
+        foreach($external_diff as $external_payment) {
+          $external_time = strtotime($external_payment['TransTime']);
+          $time_diff = abs($internal_payment['received'] - $external_time);
+
+          // Minimum cycle time is 1 week, so if it's within a few days
+          // assume it's the correct payment.
+          if ($time_diff < (3 * 60 * 60 * 24)) {
+            unset($external_diff[$external_payment['PNRef']], $mismatched_internal[$internal_key]);
+            continue 2;
+          }
+        }
+      }
+    }
+
+    // No PFP payments missing internal payment records after date check.
+    if (empty($external_diff)) {
+      watchdog('payflow_import', 'No missing payments for @profile_id after date check',
+        array('@profile_id' => $profile->getProfileID()),
+        WATCHDOG_NOTICE
+      );
+      continue;
+    }
+
+    // If we still have mismatched payments and missing payments,
+    // just match up any payments together.
+    // This may happen if the payment dates are messed up, but we still don't
+    // want to create duplicate payments.
+    // Basically just make sure count(internal) <= count(external).
+    if (!empty($mismatched_internal)) {
+      foreach($mismatched_internal as $internal_key => $internal_payment) {
+        // Ran out of external payments.
+        if (empty($external_diff)) {
+          break;
+        }
+
+        // Just pick one.
+        array_pop($external_diff);
+        unset($mismatched_internal[$internal_key]);
+      }
+    }
+
+    // No PFP payments missing internal payment records after guessing.
+    if (empty($external_diff)) {
+      watchdog('payflow_import', 'No missing payments for @profile_id after secondary check',
+        array('@profile_id' => $profile->getProfileID()),
+        WATCHDOG_NOTICE
+      );
+      continue;
+    }
+
+    // Still payments missing after our best efforts to find them,
+    // so they are really missing and we need to create them.
+    foreach($external_diff as $missing_payment) {
+      // Allow us to differentiate between imports and normal cron runs.
+      $missing_payment['Imported'] = 1;
+
+      // Save a payment.
+      $order = _uc_payflowpro_recurring_save_payment($row, $profile, $missing_payment);
+
+      // This intentionally does not call uc_roles_action_order_renew because
+      // the user may have already been fixed and we have no way to tell.
+      watchdog('payflow_import', 'Imported payment for @profile_id ref code @PNRef. If using uc_roles, please also check the user account.',
+        array('@profile_id' => $profile->getProfileID(), '@PNRef' => $missing_payment['PNRef']),
+        WATCHDOG_NOTICE,
+        l('View Order', 'admin/store/orders/' . intval($order->order_id))
+      );
+    }
+  }
+
+  drupal_set_message(t('Import completed! Check "Recent log entries" Report for results.'));
+}
+
 function theme_payflowpro_tender($tender, $update_link = NULL) {
   $output = '';
 

@@ -1,4 +1,8 @@
 
+UC Payflow Pro 6.x-1.6, in development
+------------------------------
+#2034193 by kwinters, beifler: Import script for missing ubercart payments.
+
 UC Payflow Pro 6.x-1.5, 2013-07-02
 ------------------------------
 #2033373 by kwinters: Log more info when creating payments.
