@@ -1386,6 +1386,15 @@ function _uc_payflowpro_recurring_save_payment($profile_row, $profile_object, $d
 
   unset($data['Amt']);
 
+  // Try to match the order/payment time to the actual charge time.
+  $payment_time = time();
+  if (isset($data['TransTime'])) {
+    $external_payment_time = strtotime($data['TransTime']);
+    if ($external_payment_time > 0) {
+      $payment_time = $external_payment_time;
+    }
+  }
+
   // Save a helpful payment comment.
   if (!empty($data['Imported'])) {
     $comment = "Importing missing";
@@ -1403,12 +1412,24 @@ function _uc_payflowpro_recurring_save_payment($profile_row, $profile_object, $d
     $shell_order = uc_order_new($profile_row->uid);
     // Use the new, reserved ID with the old data.
     $order->order_id = $shell_order->order_id;
+    // Update some other fields to reflect the new payment.
+    $order->created = $payment_time;
+    $order->modified = $payment_time;
+
+    // Duplicate products by removing the old order association from them.
+    if (isset($order->products)) {
+      foreach($order->products as &$product) {
+        unset($product->order_product_id);
+        $product->order_id = $shell_order->order_id;
+      }
+    }
+
     // Seve the full data to the new ID.
     uc_order_save($order);
   }
 
   // Add a payment to the order
-  uc_payment_enter($order->order_id, 'payflowpro', $data['Amount'], 0, $data, $comment);
+  uc_payment_enter($order->order_id, 'payflowpro', $data['Amount'], 0, $data, $comment, $payment_time);
 
   return $order;
 }

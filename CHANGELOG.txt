@@ -2,6 +2,7 @@
 UC Payflow Pro 6.x-1.6, in development
 ------------------------------
 #2034193 by kwinters, beifler: Import script for missing ubercart payments.
+#2062323 by kwinters, beifler: Fixed clone order time and products.
 
 UC Payflow Pro 6.x-1.5, 2013-07-02
 ------------------------------
