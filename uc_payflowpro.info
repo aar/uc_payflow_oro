@@ -3,5 +3,6 @@ description = A gateway used to process payments using PayPal PayFlow Pro.  This
 dependencies[] = uc_payment
 dependencies[] = uc_credit
 package = Ubercart - payment
-core = 6.x
+core = 7.x
 php = 5.0
+
